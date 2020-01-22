@@ -47,22 +47,8 @@ def getMask(label, scribble, class_id, class_ids):
     for class_id in class_ids:
         bg_mask[label == class_id] = 0
 
-    # Scribble Mask
-    bg_scribble = scribble == 0
-    fg_scribble = torch.where((fg_mask == 1)
-                              & (scribble != 0)
-                              & (scribble != 255),
-                              scribble, torch.zeros_like(fg_mask))
-    scribble_cls_list = list(set(np.unique(fg_scribble)) - set([0,]))
-    if scribble_cls_list:  # Still need investigation
-        fg_scribble = fg_scribble == random.choice(scribble_cls_list).item()
-    else:
-        fg_scribble[:] = 0
-
     return {'fg_mask': fg_mask,
-            'bg_mask': bg_mask,
-            'fg_scribble': fg_scribble.long(),
-            'bg_scribble': bg_scribble.long()}
+            'bg_mask': bg_mask}
 
 
 def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
@@ -100,11 +86,6 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
     else:
         support_labels = [[paired_sample[cumsum_idx[i] + j]['label'] for j in range(n_shots)]
                           for i in range(n_ways)]
-    support_scribbles = [[paired_sample[cumsum_idx[i] + j]['scribble'] for j in range(n_shots)]
-                         for i in range(n_ways)]
-    support_insts = [[paired_sample[cumsum_idx[i] + j]['inst'] for j in range(n_shots)]
-                     for i in range(n_ways)]
-
 
 
     # query images, masks and class indices
@@ -156,7 +137,6 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
             'support_images_t': support_images_t,
             'support_images': support_images,
             'support_mask': support_mask,
-            'support_inst': support_insts,
 
             'query_images_t': query_images_t,
             'query_images': query_images,

@@ -15,6 +15,7 @@ from dataloaders.customized import voc_fewshot, coco_fewshot
 from dataloaders.transforms import RandomMirror, Resize, ToTensorNormalize
 from util.utils import set_seed, CLASS_LABELS
 from config import ex
+import pdb
 
 
 @ex.automain
@@ -95,35 +96,4 @@ def main(_run, _config, _log):
             [query_label.long().cuda() for query_label in sample_batched['query_labels']], dim=0)
 
         # Forward and Backward
-        optimizer.zero_grad()
-        query_pred, align_loss = model(support_images, support_fg_mask, support_bg_mask,
-                                       query_images)
-        query_loss = criterion(query_pred, query_labels)
-        loss = query_loss + align_loss * _config['align_loss_scaler']
-        loss.backward()
-        optimizer.step()
-        scheduler.step()
-
-        # Log loss
-        query_loss = query_loss.detach().data.cpu().numpy()
-        align_loss = align_loss.detach().data.cpu().numpy() if align_loss != 0 else 0
-        _run.log_scalar('loss', query_loss)
-        _run.log_scalar('align_loss', align_loss)
-        log_loss['loss'] += query_loss
-        log_loss['align_loss'] += align_loss
-
-
-        # print loss and take snapshots
-        if (i_iter + 1) % _config['print_interval'] == 0:
-            loss = log_loss['loss'] / (i_iter + 1)
-            align_loss = log_loss['align_loss'] / (i_iter + 1)
-            print(f'step {i_iter+1}: loss: {loss}, align_loss: {align_loss}')
-
-        if (i_iter + 1) % _config['save_pred_every'] == 0:
-            _log.info('###### Taking snapshot ######')
-            torch.save(model.state_dict(),
-                       os.path.join(f'{_run.observers[0].dir}/snapshots', f'{i_iter + 1}.pth'))
-
-    _log.info('###### Saving final model ######')
-    torch.save(model.state_dict(),
-               os.path.join(f'{_run.observers[0].dir}/snapshots', f'{i_iter + 1}.pth'))
+        pdb.set_trace()

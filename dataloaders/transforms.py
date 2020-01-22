@@ -16,7 +16,6 @@ class RandomMirror(object):
     """
     def __call__(self, sample):
         img, label = sample['image'], sample['label']
-        inst, scribble = sample['inst'], sample['scribble']
         if random.random() < 0.5:
             img = img.transpose(Image.FLIP_LEFT_RIGHT)
             if isinstance(label, dict):
@@ -24,13 +23,9 @@ class RandomMirror(object):
                          for catId, x in label.items()}
             else:
                 label = label.transpose(Image.FLIP_LEFT_RIGHT)
-            inst = inst.transpose(Image.FLIP_LEFT_RIGHT)
-            scribble = scribble.transpose(Image.FLIP_LEFT_RIGHT)
 
         sample['image'] = img
         sample['label'] = label
-        sample['inst'] = inst
-        sample['scribble'] = scribble
         return sample
 
 class Resize(object):
@@ -45,39 +40,15 @@ class Resize(object):
 
     def __call__(self, sample):
         img, label = sample['image'], sample['label']
-        inst, scribble = sample['inst'], sample['scribble']
         img = tr_F.resize(img, self.size)
         if isinstance(label, dict):
             label = {catId: tr_F.resize(x, self.size, interpolation=Image.NEAREST)
                      for catId, x in label.items()}
         else:
             label = tr_F.resize(label, self.size, interpolation=Image.NEAREST)
-        inst = tr_F.resize(inst, self.size, interpolation=Image.NEAREST)
-        scribble = tr_F.resize(scribble, self.size, interpolation=Image.ANTIALIAS)
 
         sample['image'] = img
         sample['label'] = label
-        sample['inst'] = inst
-        sample['scribble'] = scribble
-        return sample
-
-class DilateScribble(object):
-    """
-    Dilate the scribble mask
-
-    Args:
-        size: window width
-    """
-    def __init__(self, size):
-        self.size = size
-
-    def __call__(self, sample):
-        scribble = sample['scribble']
-        dilated_scribble = Image.fromarray(
-            ndimage.minimum_filter(np.array(scribble), size=self.size))
-        dilated_scribble.putpalette(scribble.getpalette())
-
-        sample['scribble'] = dilated_scribble
         return sample
 
 class ToTensorNormalize(object):

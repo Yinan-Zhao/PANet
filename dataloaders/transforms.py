@@ -58,7 +58,6 @@ class ToTensorNormalize(object):
     """
     def __call__(self, sample):
         img, label = sample['image'], sample['label']
-        inst, scribble = sample['inst'], sample['scribble']
         img = tr_F.to_tensor(img)
         img = tr_F.normalize(img, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         if isinstance(label, dict):
@@ -66,11 +65,8 @@ class ToTensorNormalize(object):
                      for catId, x in label.items()}
         else:
             label = torch.Tensor(np.array(label)).long()
-        inst = torch.Tensor(np.array(inst)).long()
-        scribble = torch.Tensor(np.array(scribble)).long()
 
         sample['image'] = img
         sample['label'] = label
-        sample['inst'] = inst
-        sample['scribble'] = scribble
+
         return sample

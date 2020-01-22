@@ -64,7 +64,8 @@ def main(_run, _config, _log):
     )
     trainloader = DataLoader(
         dataset,
-        batch_size=_config['batch_size'],
+        #batch_size=_config['batch_size'],
+        batch_size=2,
         shuffle=True,
         num_workers=1,
         pin_memory=True,

@@ -75,7 +75,7 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
 
     # support images
     support_images = [[paired_sample[cumsum_idx[i] + j]['image'] for j in range(n_shots)]
-                      for i in range(n_ways)]
+                      for i in range(n_ways)] # [way][shot]
     support_images_t = [[paired_sample[cumsum_idx[i] + j]['image_t'] for j in range(n_shots)]
                         for i in range(n_ways)]
 
@@ -117,6 +117,13 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
         for j in range(n_ways):
             query_label_tmp[query_labels[i] == class_ids[j]] = j + 1
 
+    support_labels_tmp = [[torch.zeros_like(support_labels[way][shot]) 
+                        for shot in range(n_shots)] for way in range(n_ways)]
+    for way in range(n_ways):
+        for shot in range(n_shots):
+            support_labels_tmp[way][shot][support_labels[way][shot] == 255] = 255
+            for j in range(n_ways):
+                support_labels_tmp[way][shot][support_labels[way][shot] == class_ids[j]] = j + 1
 
     ###### Generate query mask for each semantic class (including BG) ######
     # BG class
@@ -137,6 +144,7 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
 
             'support_images_t': support_images_t,
             'support_images': support_images,
+            'support_labels': support_labels_tmp
             'support_mask': support_mask,
 
             'query_images_t': query_images_t,

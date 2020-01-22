@@ -10,7 +10,6 @@ from torch.optim.lr_scheduler import MultiStepLR
 import torch.backends.cudnn as cudnn
 from torchvision.transforms import Compose
 
-from models.fewshot import FewShotSeg
 #from dataloaders.customized import voc_fewshot, coco_fewshot
 from dataloaders.transforms import RandomMirror, Resize, ToTensorNormalize
 from util.utils import set_seed, CLASS_LABELS
@@ -37,9 +36,6 @@ def main(_run, _config, _log):
 
 
     _log.info('###### Create model ######')
-    model = FewShotSeg(pretrained_path=_config['path']['init_path'], cfg=_config['model'])
-    model = nn.DataParallel(model.cuda(), device_ids=[_config['gpu_id'],])
-    model.train()
 
 
     _log.info('###### Load data ######')
@@ -76,9 +72,6 @@ def main(_run, _config, _log):
     )
 
     _log.info('###### Set optimizer ######')
-    optimizer = torch.optim.SGD(model.parameters(), **_config['optim'])
-    scheduler = MultiStepLR(optimizer, milestones=_config['lr_milestones'], gamma=0.1)
-    criterion = nn.CrossEntropyLoss(ignore_index=_config['ignore_label'])
 
     i_iter = 0
     log_loss = {'loss': 0, 'align_loss': 0}

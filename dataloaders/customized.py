@@ -144,7 +144,7 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
 
             'support_images_t': support_images_t,
             'support_images': support_images,
-            'support_labels': support_labels_tmp
+            'support_labels': support_labels_tmp,
             'support_mask': support_mask,
 
             'query_images_t': query_images_t,

@@ -12,7 +12,6 @@ from torchvision.transforms import Compose
 
 from models.fewshot import FewShotSeg
 #from dataloaders.customized import voc_fewshot, coco_fewshot
-from dataloaders.customized import voc_fewshot
 from dataloaders.transforms import RandomMirror, Resize, ToTensorNormalize
 from util.utils import set_seed, CLASS_LABELS
 from config import ex
@@ -46,8 +45,10 @@ def main(_run, _config, _log):
     _log.info('###### Load data ######')
     data_name = _config['dataset']
     if data_name == 'VOC':
+        from dataloaders.customized import voc_fewshot
         make_data = voc_fewshot
     elif data_name == 'COCO':
+        from dataloaders.customized import coco_fewshot
         make_data = coco_fewshot
     else:
         raise ValueError('Wrong config for dataset!')

@@ -25,7 +25,7 @@ def attrib_basic(_sample, class_id):
     return {'class_id': class_id}
 
 
-def getMask(label, scribble, class_id, class_ids):
+def getMask(label, class_id, class_ids):
     """
     Generate FG/BG mask from the segmentation mask
 
@@ -105,7 +105,7 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
 
 
     ###### Generate support image masks ######
-    support_mask = [[getMask(support_labels[way][shot], support_scribbles[way][shot],
+    support_mask = [[getMask(support_labels[way][shot],
                              class_ids[way], class_ids)
                      for shot in range(n_shots)] for way in range(n_ways)]
 

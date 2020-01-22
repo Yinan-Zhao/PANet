@@ -35,7 +35,7 @@ def cfg():
         dataset = 'VOC'  # 'VOC' or 'COCO'
         n_steps = 30000
         label_sets = 0
-        batch_size = 1
+        batch_size = 2
         lr_milestones = [10000, 20000, 30000]
         align_loss_scaler = 1
         ignore_label = 255

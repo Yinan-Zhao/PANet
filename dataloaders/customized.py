@@ -117,6 +117,7 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
         for j in range(n_ways):
             query_label_tmp[query_labels[i] == class_ids[j]] = j + 1
 
+
     ###### Generate query mask for each semantic class (including BG) ######
     # BG class
     query_masks = [[torch.where(query_label == 0,

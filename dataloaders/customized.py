@@ -9,7 +9,7 @@ import torch
 import numpy as np
 
 from .pascal import VOC
-from .coco import COCOSeg
+#from .coco import COCOSeg
 from .common import PairedDataset
 
 
@@ -193,7 +193,7 @@ def voc_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots,
                                                'cnt_query': cnt_query})])
     return paired_data
 
-
+'''
 def coco_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots, max_iters,
                  n_queries=1):
     """
@@ -238,4 +238,5 @@ def coco_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots
                                     (fewShot, {'n_ways': n_ways, 'n_shots': n_shots,
                                                'cnt_query': cnt_query, 'coco': True})])
     return paired_data
+    '''
     

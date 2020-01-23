@@ -129,6 +129,7 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
     query_labels_tmp = [perm_mapping[0]+torch.zeros_like(x) for x in query_labels]
     print(query_labels_haha[0].dtype)
     print(query_labels_tmp[0].dtype)
+    print(type(perm_mapping[0]))
     for i, query_label_tmp in enumerate(query_labels_tmp):
         query_label_tmp[query_labels[i] == 255] = 255
         for j in range(n_ways):

@@ -236,6 +236,7 @@ def main(cfg, gpus):
         dataset,
         batch_size=cfg.TRAIN.n_batch,
         shuffle=True,
+        collate_fn=user_scattered_collate,
         num_workers=4,
         pin_memory=True,
         drop_last=True
@@ -384,8 +385,8 @@ if __name__ == '__main__':
     gpus = parse_devices(args.gpus)
     gpus = [x.replace('gpu', '') for x in gpus]
     gpus = [int(x) for x in gpus]
-    print('gpus')
-    print(gpus)
+    #print('gpus')
+    #print(gpus)
     num_gpus = len(gpus)
     cfg.TRAIN.batch_size = num_gpus * cfg.TRAIN.batch_size_per_gpu
 

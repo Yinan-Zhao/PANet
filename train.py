@@ -16,6 +16,25 @@ from util.utils import set_seed, CLASS_LABELS
 from config import ex
 import pdb
 
+def data_preprocess(sample_batched, cfg):
+    feed_dict = {}
+    feed_dict['img_data'] = sample_batched['query_images'][0].cuda()
+    feed_dict['seg_label'] = sample_batched['query_labels'][0].cuda()
+    n_ways = cfg.TASK.n_ways
+    n_shots = cfg.TASK.n_shots
+    n_batch = sample_batched['support_images'][0][0].shape[0]
+    n_channel = sample_batched['support_images'][0][0].shape[1]
+    height = sample_batched['support_images'][0][0].shape[2]
+    width = sample_batched['support_images'][0][0].shape[3]
+    feed_dict['img_refs_rgb'] = torch.zeros(n_batch, n_channel, n_ways*n_shots, height, width, dtype=sample_batched['support_images'][0][0].dtype)
+    for i in n_ways:
+        for j in n_shots:
+            feed_dict['img_refs_rgb'][:,:,i*n_ways+j,:,:] = sample_batched['support_images'][i][j]
+    feed_dict['img_refs_rgb'] = feed_dict['img_refs_rgb'].cuda()
+    
+
+    return feed_dict
+
 
 @ex.automain
 def main(_run, _config, _log):

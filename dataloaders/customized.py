@@ -13,6 +13,16 @@ from .pascal import VOC
 from .common import PairedDataset
 
 
+def segm_one_hot(segm, n_ways):
+    size = segm.size()
+    assert len(size) == 2
+    segm = segm.unsqueeze(0)
+    oneHot_size = (n_ways+2, size[0], size[1])
+    segm_oneHot = torch.FloatTensor(torch.Size(oneHot_size)).zero_()
+    segm_oneHot = segm_oneHot.scatter_(0, segm, 1.0)
+    return segm_oneHot
+
+
 def attrib_basic(_sample, class_id):
     """
     Add basic attribute
@@ -119,11 +129,15 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
 
     support_labels_tmp = [[torch.zeros_like(support_labels[way][shot]) 
                         for shot in range(n_shots)] for way in range(n_ways)]
+    support_labels_return = []
     for way in range(n_ways):
+        tmp = []
         for shot in range(n_shots):
-            support_labels_tmp[way][shot][support_labels[way][shot] == 255] = 255
+            support_labels_tmp[way][shot][support_labels[way][shot] == 255] = -1
             for j in range(n_ways):
                 support_labels_tmp[way][shot][support_labels[way][shot] == class_ids[j]] = j + 1
+            tmp.append(segm_one_hot(support_labels_tmp[way][shot], n_ways))
+        support_labels_return.append(tmp)
 
     ###### Generate query mask for each semantic class (including BG) ######
     # BG class
@@ -144,7 +158,7 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
 
             'support_images_t': support_images_t,
             'support_images': support_images,
-            'support_labels': support_labels_tmp,
+            'support_labels': support_labels_return,
             'support_mask': support_mask,
 
             'query_images_t': query_images_t,

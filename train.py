@@ -235,7 +235,8 @@ def main(cfg, gpus):
         max_iters=cfg.TRAIN.n_iters * cfg.TRAIN.n_batch,
         n_ways=cfg.TASK.n_ways,
         n_shots=cfg.TASK.n_shots,
-        n_queries=cfg.TASK.n_queries
+        n_queries=cfg.TASK.n_queries,
+        permute=cfg.TRAIN.permute_labels
     )
     trainloader = DataLoader(
         dataset,

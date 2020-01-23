@@ -123,6 +123,7 @@ _C.TRAIN.disp_iter = 20
 # manual seed
 _C.TRAIN.seed = 304
 _C.TRAIN.save_freq = 10000
+_C.TRAIN.permute_labels = False
 
 # -----------------------------------------------------------------------------
 # Validation
@@ -134,6 +135,7 @@ _C.VAL.batch_size = 1
 _C.VAL.visualize = False
 # the checkpoint to evaluate on
 _C.VAL.checkpoint = "epoch_20.pth"
+_C.VAL.permute_labels = False
 
 # -----------------------------------------------------------------------------
 # Testing

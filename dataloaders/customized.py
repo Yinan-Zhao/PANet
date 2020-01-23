@@ -61,7 +61,7 @@ def getMask(label, class_id, class_ids):
             'bg_mask': bg_mask}
 
 
-def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
+def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False):
     """
     Postprocess paired sample for fewshot settings
 
@@ -77,6 +77,10 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
         coco:
             MS COCO dataset
     """
+    if permute:
+        perm_mapping = np.random.permutation(n_ways+1)
+    else:
+        perm_mapping = np.array(range(n_ways+1))
     ###### Compose the support and query image list ######
     cumsum_idx = np.cumsum([0,] + [n_shots + x for x in cnt_query])
 
@@ -121,13 +125,13 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
 
 
     ###### Generate query label (class indices in one episode, i.e. the ground truth)######
-    query_labels_tmp = [torch.zeros_like(x) for x in query_labels]
+    query_labels_tmp = [perm_mapping[0]+torch.zeros_like(x) for x in query_labels]
     for i, query_label_tmp in enumerate(query_labels_tmp):
         query_label_tmp[query_labels[i] == 255] = 255
         for j in range(n_ways):
-            query_label_tmp[query_labels[i] == class_ids[j]] = j + 1
+            query_label_tmp[query_labels[i] == class_ids[j]] = perm_mapping[j+1]
 
-    support_labels_tmp = [[torch.zeros_like(support_labels[way][shot]) 
+    support_labels_tmp = [[perm_mapping[0]+torch.zeros_like(support_labels[way][shot]) 
                         for shot in range(n_shots)] for way in range(n_ways)]
     support_labels_return = []
     for way in range(n_ways):
@@ -135,7 +139,7 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
         for shot in range(n_shots):
             support_labels_tmp[way][shot][support_labels[way][shot] == 255] = n_ways+1
             for j in range(n_ways):
-                support_labels_tmp[way][shot][support_labels[way][shot] == class_ids[j]] = j + 1
+                support_labels_tmp[way][shot][support_labels[way][shot] == class_ids[j]] = perm_mapping[j+1]
             tmp.append(segm_one_hot(support_labels_tmp[way][shot], n_ways))
         support_labels_return.append(tmp)
 
@@ -170,7 +174,7 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
 
 
 def voc_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots, max_iters,
-                n_queries=1):
+                n_queries=1, permute=False):
     """
     Args:
         base_dir:
@@ -213,7 +217,7 @@ def voc_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots,
     paired_data = PairedDataset(subsets, n_elements=n_elements, max_iters=max_iters, same=False,
                                 pair_based_transforms=[
                                     (fewShot, {'n_ways': n_ways, 'n_shots': n_shots,
-                                               'cnt_query': cnt_query})])
+                                               'cnt_query': cnt_query, 'permute': permute})])
     return paired_data
 
 

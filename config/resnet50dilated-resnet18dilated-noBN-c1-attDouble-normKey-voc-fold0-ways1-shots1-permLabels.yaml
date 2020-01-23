@@ -39,7 +39,7 @@ TRAIN:
   disp_iter: 20
   seed: 304
   save_freq: 10000
-  permute_labels: False
+  permute_labels: True
 
 VAL:
   visualize: False
@@ -49,4 +49,4 @@ TEST:
   checkpoint: "epoch_25.pth"
   result: "./"
 
-DIR: "ckpt/resnet50dilated-resnet18dilated-noBN-c1-attDouble-normKey-voc-fold0-ways1-shots1"
+DIR: "ckpt/resnet50dilated-resnet18dilated-noBN-c1-attDouble-normKey-voc-fold0-ways1-shots1-permLabels"

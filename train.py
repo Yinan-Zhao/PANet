@@ -384,6 +384,8 @@ if __name__ == '__main__':
     gpus = parse_devices(args.gpus)
     gpus = [x.replace('gpu', '') for x in gpus]
     gpus = [int(x) for x in gpus]
+    print('gpus')
+    print(gpus)
     num_gpus = len(gpus)
     cfg.TRAIN.batch_size = num_gpus * cfg.TRAIN.batch_size_per_gpu
 

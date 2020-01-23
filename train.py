@@ -268,7 +268,6 @@ def main(cfg, gpus):
 
     print('###### Training ######')
     for i_iter, sample_batched in enumerate(trainloader):
-        pdb.set_trace()
         # Prepare input
         feed_dict = data_preprocess(sample_batched, cfg)
 

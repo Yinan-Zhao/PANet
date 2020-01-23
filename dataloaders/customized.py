@@ -17,7 +17,7 @@ def segm_one_hot(segm, n_ways):
     size = segm.size()
     assert len(size) == 2
     segm = segm.unsqueeze(0)
-    oneHot_size = (n_ways+1, size[0], size[1])
+    oneHot_size = (n_ways+2, size[0], size[1])
     segm_oneHot = torch.FloatTensor(torch.Size(oneHot_size)).zero_()
     segm_oneHot = segm_oneHot.scatter_(0, segm, 1.0)
     return segm_oneHot
@@ -133,7 +133,7 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False):
     for way in range(n_ways):
         tmp = []
         for shot in range(n_shots):
-            support_labels_tmp[way][shot][support_labels[way][shot] == 255] = 0
+            support_labels_tmp[way][shot][support_labels[way][shot] == 255] = n_ways+1
             for j in range(n_ways):
                 support_labels_tmp[way][shot][support_labels[way][shot] == class_ids[j]] = j + 1
             tmp.append(segm_one_hot(support_labels_tmp[way][shot], n_ways))

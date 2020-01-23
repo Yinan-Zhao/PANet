@@ -237,18 +237,17 @@ def main(cfg, gpus):
         dataset,
         batch_size=cfg.TRAIN.n_batch,
         shuffle=True,
-        collate_fn=user_scattered_collate,
         num_workers=4,
         pin_memory=True,
         drop_last=True
     )
 
-    segmentation_module = UserScatteredDataParallel(
-        segmentation_module,
-        device_ids=gpus)
+    #segmentation_module = UserScatteredDataParallel(
+        #segmentation_module,
+        #device_ids=gpus)
     # For sync bn
-    patch_replication_callback(segmentation_module)
-    #segmentation_module = nn.DataParallel(segmentation_module, device_ids=gpus)
+    #patch_replication_callback(segmentation_module)
+    segmentation_module = nn.DataParallel(segmentation_module, device_ids=gpus)
     segmentation_module.cuda()
 
     # Set up optimizers

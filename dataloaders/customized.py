@@ -127,15 +127,12 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
     ###### Generate query label (class indices in one episode, i.e. the ground truth)######
     query_labels_haha = [torch.zeros_like(x) for x in query_labels]
     query_labels_tmp = [torch.tensor(perm_mapping[0]).long()+torch.zeros_like(x) for x in query_labels]
-    print(query_labels_haha[0].dtype)
-    print(query_labels_tmp[0].dtype)
-    print(type(perm_mapping[0]))
     for i, query_label_tmp in enumerate(query_labels_tmp):
         query_label_tmp[query_labels[i] == 255] = 255
         for j in range(n_ways):
-            query_label_tmp[query_labels[i] == class_ids[j]] = int(perm_mapping[j+1])
+            query_label_tmp[query_labels[i] == class_ids[j]] = perm_mapping[j+1]
 
-    support_labels_tmp = [[perm_mapping[0]+torch.zeros_like(support_labels[way][shot]) 
+    support_labels_tmp = [[torch.tensor(perm_mapping[0]).long()+torch.zeros_like(support_labels[way][shot]) 
                         for shot in range(n_shots)] for way in range(n_ways)]
     support_labels_return = []
     for way in range(n_ways):
@@ -143,7 +140,7 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
         for shot in range(n_shots):
             support_labels_tmp[way][shot][support_labels[way][shot] == 255] = n_ways+1
             for j in range(n_ways):
-                support_labels_tmp[way][shot][support_labels[way][shot] == class_ids[j]] = int(perm_mapping[j+1])
+                support_labels_tmp[way][shot][support_labels[way][shot] == class_ids[j]] = perm_mapping[j+1]
             tmp.append(segm_one_hot(support_labels_tmp[way][shot], n_ways))
         support_labels_return.append(tmp)
 

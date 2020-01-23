@@ -38,15 +38,15 @@ def data_preprocess(sample_batched, cfg):
     height = sample_batched['support_images'][0][0].shape[2]
     width = sample_batched['support_images'][0][0].shape[3]
     feed_dict['img_refs_rgb'] = torch.zeros(n_batch, n_channel, n_ways*n_shots, height, width, dtype=sample_batched['support_images'][0][0].dtype)
-    for i in n_ways:
-        for j in n_shots:
+    for i in range(n_ways):
+        for j in range(n_shots):
             feed_dict['img_refs_rgb'][:,:,i*n_ways+j,:,:] = sample_batched['support_images'][i][j]
     feed_dict['img_refs_rgb'] = feed_dict['img_refs_rgb'].cuda()
 
     n_channel_mask = sample_batched['support_labels'][0][0].shape[1]
     feed_dict['img_refs_mask'] = torch.zeros(n_batch, n_channel_mask, n_ways*n_shots, height, width, dtype=sample_batched['support_labels'][0][0].dtype)
-    for i in n_ways:
-        for j in n_shots:
+    for i in range(n_ways):
+        for j in range(n_shots):
             feed_dict['img_refs_mask'][:,:,i*n_ways+j,:,:] = sample_batched['support_labels'][i][j]
     feed_dict['img_refs_mask'] = feed_dict['img_refs_mask'].cuda()
 

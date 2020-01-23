@@ -25,7 +25,7 @@ MODEL:
 
 TRAIN:
   n_iters: 60000
-  start_iter: 200
+  start_iter: 0
   n_batch: 8
   optim: "SGD"
   lr_encoder: 0.02
@@ -38,7 +38,7 @@ TRAIN:
   workers: 4
   disp_iter: 20
   seed: 304
-  save_freq: 100
+  save_freq: 10000
 
 VAL:
   visualize: False

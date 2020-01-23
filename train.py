@@ -31,10 +31,10 @@ def data_preprocess(sample_batched, cfg):
     feed_dict = {}
     feed_dict['img_data'] = sample_batched['query_images'][0].cuda()
     tmp = sample_batched['query_labels'][0]
-    tmp = torch.unsqueeze(tmp, 1)
+    tmp = torch.unsqueeze(tmp, 1).float()
     tmp = nn.functional.interpolate(tmp, size=(cfg.DATASET.input_size[0]//cfg.DATASET.segm_downsampling_rate,
         cfg.DATASET.input_size[1]//cfg.DATASET.segm_downsampling_rate), mode='nearest')
-    feed_dict['seg_label'] = tmp[:,0,:,:].cuda() 
+    feed_dict['seg_label'] = tmp[:,0,:,:].long().cuda() 
 
     n_ways = cfg.TASK.n_ways
     n_shots = cfg.TASK.n_shots

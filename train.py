@@ -23,7 +23,7 @@ from dataloaders.transforms import RandomMirror, Resize, ToTensorNormalize
 from util.utils import set_seed, CLASS_LABELS
 from utils_seg import AverageMeter, parse_devices, setup_logger
 from models import ModelBuilder, SegmentationAttentionSeparateModule
-from lib.nn import UserScatteredDataParallel, user_scattered_collate, patch_replication_callback
+#from lib.nn import UserScatteredDataParallel, user_scattered_collate, patch_replication_callback
 import pdb
 
 

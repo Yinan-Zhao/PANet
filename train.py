@@ -20,6 +20,7 @@ def data_preprocess(sample_batched, cfg):
     feed_dict = {}
     feed_dict['img_data'] = sample_batched['query_images'][0].cuda()
     feed_dict['seg_label'] = sample_batched['query_labels'][0].cuda()
+
     n_ways = cfg.TASK.n_ways
     n_shots = cfg.TASK.n_shots
     n_batch = sample_batched['support_images'][0][0].shape[0]
@@ -31,7 +32,13 @@ def data_preprocess(sample_batched, cfg):
         for j in n_shots:
             feed_dict['img_refs_rgb'][:,:,i*n_ways+j,:,:] = sample_batched['support_images'][i][j]
     feed_dict['img_refs_rgb'] = feed_dict['img_refs_rgb'].cuda()
-    
+
+    n_channel_mask = sample_batched['support_labels'][0][0].shape[1]
+    feed_dict['img_refs_mask'] = torch.zeros(n_batch, n_channel_mask, n_ways*n_shots, height, width, dtype=sample_batched['support_labels'][0][0].dtype)
+    for i in n_ways:
+        for j in n_shots:
+            feed_dict['img_refs_mask'][:,:,i*n_ways+j,:,:] = sample_batched['support_labels'][i][j]
+    feed_dict['img_refs_mask'] = feed_dict['img_refs_mask'].cuda()
 
     return feed_dict
 
@@ -99,17 +106,7 @@ def main(_run, _config, _log):
     _log.info('###### Training ######')
     for i_iter, sample_batched in enumerate(trainloader):
         # Prepare input
-        support_images = [[shot.cuda() for shot in way]
-                          for way in sample_batched['support_images']]
-        support_fg_mask = [[shot[f'fg_mask'].float().cuda() for shot in way]
-                           for way in sample_batched['support_mask']]
-        support_bg_mask = [[shot[f'bg_mask'].float().cuda() for shot in way]
-                           for way in sample_batched['support_mask']]
-
-        query_images = [query_image.cuda()
-                        for query_image in sample_batched['query_images']]
-        query_labels = torch.cat(
-            [query_label.long().cuda() for query_label in sample_batched['query_labels']], dim=0)
+        feed_dict = data_preprocess(sample_batched)
 
         # Forward and Backward
         pdb.set_trace()

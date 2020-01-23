@@ -301,7 +301,7 @@ def main(cfg, gpus):
         ave_acc.update(acc.data.item()*100)
 
         # calculate accuracy, and display
-        if i % cfg.TRAIN.disp_iter == 0:
+        if i_iter % cfg.TRAIN.disp_iter == 0:
             print('Iter: [{}][{}/{}], Time: {:.2f}, Data: {:.2f}, '
                   'lr_encoder: {:.6f}, lr_decoder: {:.6f}, '
                   'Accuracy: {:4.2f}, Loss: {:.6f}'

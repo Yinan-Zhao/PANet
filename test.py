@@ -12,6 +12,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import torch.backends.cudnn as cudnn
 from torchvision.transforms import Compose
+from PIL import Image
 
 from config import cfg
 from models import ModelBuilder, SegmentationAttentionSeparateModule

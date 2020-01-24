@@ -17,7 +17,7 @@ from config import cfg
 from models import ModelBuilder, SegmentationAttentionSeparateModule
 from utils_seg import AverageMeter, colorEncode, accuracy, intersectionAndUnion, parse_devices, setup_logger
 
-from dataloaders.customized import voc_fewshot, coco_fewshot
+#from dataloaders.customized import voc_fewshot, coco_fewshot
 from dataloaders.transforms import ToTensorNormalize
 from dataloaders.transforms import Resize, DilateScribble
 from util.metric import Metric
@@ -109,9 +109,11 @@ def main(cfg, gpus):
     print('###### Prepare data ######')
     data_name = cfg.DATASET.name
     if data_name == 'VOC':
+        from dataloaders.customized import voc_fewshot
         make_data = voc_fewshot
         max_label = 20
     elif data_name == 'COCO':
+        from dataloaders.customized import coco_fewshot
         make_data = coco_fewshot
         max_label = 80
     else:

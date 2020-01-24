@@ -162,7 +162,7 @@ def main(cfg, gpus):
                 query_pred = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
 
                 metric.record(np.array(query_pred.argmax(dim=1)[0].cpu()),
-                              np.array(feed_dict['seg_label'].cpu()),
+                              np.array(feed_dict['seg_label'][0].cpu()),
                               labels=label_ids, n_run=run)
 
             classIoU, meanIoU = metric.get_mIoU(labels=sorted(labels), n_run=run)

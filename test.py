@@ -186,9 +186,9 @@ def main(cfg, gpus):
                               labels=label_ids, n_run=run)
 
                 if cfg.VAL.visualize:
-                    print(as_numpy(feed_dict['seg_label'][0].cpu()).shape)
-                    print(as_numpy(np.array(query_pred.argmax(dim=1)[0].cpu())).shape)
-                    print(feed_dict['img_data'].cpu().shape)
+                    #print(as_numpy(feed_dict['seg_label'][0].cpu()).shape)
+                    #print(as_numpy(np.array(query_pred.argmax(dim=1)[0].cpu())).shape)
+                    #print(feed_dict['img_data'].cpu().shape)
                     visualize_result(
                         (as_numpy(feed_dict['img_data'].cpu()[0]).transpose(1,2,0), as_numpy(feed_dict['seg_label'][0].cpu()), '%05d'%(count)),
                         as_numpy(np.array(query_pred.argmax(dim=1)[0].cpu())),

@@ -185,7 +185,7 @@ def main(cfg, gpus):
 
                 if cfg.VAL.visualize:
                     visualize_result(
-                        (feed_dict['img_data'], feed_dict['query_labels'], '%05d'%(count)),
+                        (feed_dict['img_data'], feed_dict['seg_label'], '%05d'%(count)),
                         np.array(query_pred.argmax(dim=1)[0].cpu()),
                         os.path.join(cfg.DIR, 'result')
                     )

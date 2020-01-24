@@ -28,10 +28,10 @@ def visualize_result(data, pred, dir_result):
     (img, seg, info) = data
 
     # segmentation
-    seg_color = colorEncodeGray(seg, colors)
+    seg_color = colorEncodeGray(seg)
 
     # prediction
-    pred_color = colorEncodeGray(pred, colors)
+    pred_color = colorEncodeGray(pred)
 
     # aggregate images and save
     im_vis = np.concatenate((img, seg_color, pred_color),

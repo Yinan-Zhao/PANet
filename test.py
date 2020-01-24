@@ -189,7 +189,7 @@ def main(cfg, gpus):
                     print(as_numpy(np.array(query_pred.argmax(dim=1)[0].cpu())).shape)
                     print(feed_dict['img_data'].cpu().shape)
                     visualize_result(
-                        (feed_dict['img_data'].cpu(), as_numpy(feed_dict['seg_label'][0].cpu()), '%05d'%(count)),
+                        (as_numpy(feed_dict['img_data'].cpu()[0].transpose(1,2,0)), as_numpy(feed_dict['seg_label'][0].cpu()), '%05d'%(count)),
                         as_numpy(np.array(query_pred.argmax(dim=1)[0].cpu())),
                         os.path.join(cfg.DIR, 'result')
                     )

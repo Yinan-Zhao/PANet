@@ -184,11 +184,11 @@ def main(cfg, gpus):
                               labels=label_ids, n_run=run)
 
                 if cfg.VAL.visualize:
-                visualize_result(
-                    (feed_dict['img_data'], feed_dict['query_labels'], '%05d'%(count)),
-                    np.array(query_pred.argmax(dim=1)[0].cpu()),
-                    os.path.join(cfg.DIR, 'result')
-                )
+                    visualize_result(
+                        (feed_dict['img_data'], feed_dict['query_labels'], '%05d'%(count)),
+                        np.array(query_pred.argmax(dim=1)[0].cpu()),
+                        os.path.join(cfg.DIR, 'result')
+                    )
                 count += 1
 
             classIoU, meanIoU = metric.get_mIoU(labels=sorted(labels), n_run=run)

@@ -1,6 +1,8 @@
 """Evaluation Script"""
 import os
+import argparse
 import shutil
+from distutils.version import LooseVersion
 
 import tqdm
 import numpy as np
@@ -11,40 +13,101 @@ from torch.utils.data import DataLoader
 import torch.backends.cudnn as cudnn
 from torchvision.transforms import Compose
 
-from models.fewshot import FewShotSeg
+from config import cfg
+from models import ModelBuilder, SegmentationAttentionSeparateModule
+from utils_seg import AverageMeter, colorEncode, accuracy, intersectionAndUnion, parse_devices, setup_logger
+
 from dataloaders.customized import voc_fewshot, coco_fewshot
 from dataloaders.transforms import ToTensorNormalize
 from dataloaders.transforms import Resize, DilateScribble
 from util.metric import Metric
 from util.utils import set_seed, CLASS_LABELS, get_bbox
-from config import ex
+
+def data_preprocess(sample_batched, cfg):
+    feed_dict = {}
+    feed_dict['img_data'] = sample_batched['query_images'][0].cuda()
+    feed_dict['seg_label'] = sample_batched['query_labels'][0].cuda()
+
+    n_ways = cfg.TASK.n_ways
+    n_shots = cfg.TASK.n_shots
+    n_batch = sample_batched['support_images'][0][0].shape[0]
+    n_channel = sample_batched['support_images'][0][0].shape[1]
+    height = sample_batched['support_images'][0][0].shape[2]
+    width = sample_batched['support_images'][0][0].shape[3]
+    feed_dict['img_refs_rgb'] = torch.zeros(n_batch, n_channel, n_ways*n_shots, height, width, dtype=sample_batched['support_images'][0][0].dtype)
+    for i in range(n_ways):
+        for j in range(n_shots):
+            feed_dict['img_refs_rgb'][:,:,i*n_ways+j,:,:] = sample_batched['support_images'][i][j]
+    feed_dict['img_refs_rgb'] = feed_dict['img_refs_rgb'].cuda()
+
+    n_channel_mask = sample_batched['support_labels'][0][0].shape[1]
+    feed_dict['img_refs_mask'] = torch.zeros(n_batch, n_channel_mask, n_ways*n_shots, height, width, dtype=sample_batched['support_labels'][0][0].dtype)
+    for i in range(n_ways):
+        for j in range(n_shots):
+            feed_dict['img_refs_mask'][:,:,i*n_ways+j,:,:] = sample_batched['support_labels'][i][j]
+    feed_dict['img_refs_mask'] = feed_dict['img_refs_mask'].cuda()
+
+    return feed_dict
 
 
-@ex.automain
-def main(_run, _config, _log):
-    for source_file, _ in _run.experiment_info['sources']:
-        os.makedirs(os.path.dirname(f'{_run.observers[0].dir}/source/{source_file}'),
-                    exist_ok=True)
-        _run.observers[0].save_file(source_file, f'source/{source_file}')
-    shutil.rmtree(f'{_run.observers[0].basedir}/_sources')
+def main(cfg, gpus):
+    torch.cuda.set_device(gpus[0])
 
-    set_seed(_config['seed'])
-    cudnn.enabled = True
-    cudnn.benchmark = True
-    torch.cuda.set_device(device=_config['gpu_id'])
-    torch.set_num_threads(1)
+    # Network Builders
+    net_enc_query = ModelBuilder.build_encoder(
+        arch=cfg.MODEL.arch_encoder.lower(),
+        fc_dim=cfg.MODEL.fc_dim,
+        weights=cfg.MODEL.weights_enc_query)
+    if cfg.MODEL.memory_encoder_arch:
+        net_enc_memory = ModelBuilder.build_encoder_memory_separate(
+            arch=cfg.MODEL.memory_encoder_arch.lower(),
+            fc_dim=cfg.MODEL.fc_dim,
+            weights=cfg.MODEL.weights_enc_memory,
+            num_class=cfg.TASK.n_ways+1,
+            RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
+            segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)
+    else:
+        if cfg.MODEL.memory_encoder_noBN:
+            net_enc_memory = ModelBuilder.build_encoder_memory_separate(
+                arch=cfg.MODEL.arch_encoder.lower()+'_nobn',
+                fc_dim=cfg.MODEL.fc_dim,
+                weights=cfg.MODEL.weights_enc_memory,
+                num_class=cfg.TASK.n_ways+1,
+                RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
+                segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)
+        else:
+            net_enc_memory = ModelBuilder.build_encoder_memory_separate(
+                arch=cfg.MODEL.arch_encoder.lower(),
+                fc_dim=cfg.MODEL.fc_dim,
+                weights=cfg.MODEL.weights_enc_memory,
+                num_class=cfg.TASK.n_ways+1,
+                RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
+                segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)
+    net_att_query = ModelBuilder.build_att_query(
+        arch=cfg.MODEL.arch_attention,
+        fc_dim=cfg.MODEL.fc_dim,
+        weights=cfg.MODEL.weights_att_query)
+    net_att_memory = ModelBuilder.build_att_memory(
+        arch=cfg.MODEL.arch_attention,
+        fc_dim=cfg.MODEL.fc_dim,
+        att_fc_dim=cfg.MODEL.att_fc_dim,
+        weights=cfg.MODEL.weights_att_memory)
+    net_decoder = ModelBuilder.build_decoder(
+        arch=cfg.MODEL.arch_decoder.lower(),
+        fc_dim=cfg.MODEL.fc_dim,
+        num_class=cfg.TASK.n_ways+1,
+        weights=cfg.MODEL.weights_decoder,
+        use_softmax=True)
+
+    segmentation_module = SegmentationAttentionSeparateModule(net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, zero_qval=cfg.MODEL.zero_qval, qval_qread_BN=cfg.MODEL.qval_qread_BN, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, debug=cfg.is_debug or cfg.eval_att_voting, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate)
+
+    segmentation_module = nn.DataParallel(segmentation_module, device_ids=gpus)
+    segmentation_module.cuda()
+    segmentation_module.eval()
 
 
-    _log.info('###### Create model ######')
-    model = FewShotSeg(pretrained_path=_config['path']['init_path'], cfg=_config['model'])
-    model = nn.DataParallel(model.cuda(), device_ids=[_config['gpu_id'],])
-    if not _config['notrain']:
-        model.load_state_dict(torch.load(_config['snapshot'], map_location='cpu'))
-    model.eval()
-
-
-    _log.info('###### Prepare data ######')
-    data_name = _config['dataset']
+    print('###### Prepare data ######')
+    data_name = cfg.DATASET.name
     if data_name == 'VOC':
         make_data = voc_fewshot
         max_label = 20
@@ -53,74 +116,46 @@ def main(_run, _config, _log):
         max_label = 80
     else:
         raise ValueError('Wrong config for dataset!')
-    labels = CLASS_LABELS[data_name]['all'] - CLASS_LABELS[data_name][_config['label_sets']]
-    transforms = [Resize(size=_config['input_size'])]
-    if _config['scribble_dilation'] > 0:
-        transforms.append(DilateScribble(size=_config['scribble_dilation']))
+    labels = CLASS_LABELS[data_name]['all'] - CLASS_LABELS[data_name][cfg.TASK.fold_idx]
+    transforms = [Resize(size=cfg.DATASET.input_size)]
     transforms = Compose(transforms)
 
 
-    _log.info('###### Testing begins ######')
-    metric = Metric(max_label=max_label, n_runs=_config['n_runs'])
+    print('###### Testing begins ######')
+    metric = Metric(max_label=max_label, n_runs=cfg.VAL.n_runs)
     with torch.no_grad():
-        for run in range(_config['n_runs']):
-            _log.info(f'### Run {run + 1} ###')
-            set_seed(_config['seed'] + run)
+        for run in range(cfg.VAL.n_runs):
+            print(f'### Run {run + 1} ###')
+            set_seed(cfg.VAL.seed + run)
 
-            _log.info(f'### Load data ###')
+            print(f'### Load data ###')
             dataset = make_data(
-                base_dir=_config['path'][data_name]['data_dir'],
-                split=_config['path'][data_name]['data_split'],
+                base_dir=cfg.DATASET.data_dir,
+                split=cfg.DATASET.data_split,
                 transforms=transforms,
                 to_tensor=ToTensorNormalize(),
                 labels=labels,
-                max_iters=_config['n_steps'] * _config['batch_size'],
-                n_ways=_config['task']['n_ways'],
-                n_shots=_config['task']['n_shots'],
-                n_queries=_config['task']['n_queries']
+                max_iters=cfg.VAL.n_iters * cfg.VAL.n_batch,
+                n_ways=cfg.TASK.n_ways,
+                n_shots=cfg.TASK.n_shots,
+                n_queries=cfg.TASK.n_queries,
+                permute=cfg.VAL.permute_labels
             )
-            if _config['dataset'] == 'COCO':
+            if data_name == 'COCO':
                 coco_cls_ids = dataset.datasets[0].dataset.coco.getCatIds()
-            testloader = DataLoader(dataset, batch_size=_config['batch_size'], shuffle=False,
+            testloader = DataLoader(dataset, batch_size=cfg.VAL.n_batch, shuffle=False,
                                     num_workers=1, pin_memory=True, drop_last=False)
-            _log.info(f"Total # of Data: {len(dataset)}")
+            print(f"Total # of Data: {len(dataset)}")
 
 
             for sample_batched in tqdm.tqdm(testloader):
-                if _config['dataset'] == 'COCO':
+                feed_dict = data_preprocess(sample_batched, cfg)
+                if data_name == 'COCO':
                     label_ids = [coco_cls_ids.index(x) + 1 for x in sample_batched['class_ids']]
                 else:
                     label_ids = list(sample_batched['class_ids'])
-                support_images = [[shot.cuda() for shot in way]
-                                  for way in sample_batched['support_images']]
-                suffix = 'scribble' if _config['scribble'] else 'mask'
-
-                if _config['bbox']:
-                    support_fg_mask = []
-                    support_bg_mask = []
-                    for i, way in enumerate(sample_batched['support_mask']):
-                        fg_masks = []
-                        bg_masks = []
-                        for j, shot in enumerate(way):
-                            fg_mask, bg_mask = get_bbox(shot['fg_mask'],
-                                                        sample_batched['support_inst'][i][j])
-                            fg_masks.append(fg_mask.float().cuda())
-                            bg_masks.append(bg_mask.float().cuda())
-                        support_fg_mask.append(fg_masks)
-                        support_bg_mask.append(bg_masks)
-                else:
-                    support_fg_mask = [[shot[f'fg_{suffix}'].float().cuda() for shot in way]
-                                       for way in sample_batched['support_mask']]
-                    support_bg_mask = [[shot[f'bg_{suffix}'].float().cuda() for shot in way]
-                                       for way in sample_batched['support_mask']]
-
-                query_images = [query_image.cuda()
-                                for query_image in sample_batched['query_images']]
-                query_labels = torch.cat(
-                    [query_label.cuda()for query_label in sample_batched['query_labels']], dim=0)
-
-                query_pred, _ = model(support_images, support_fg_mask, support_bg_mask,
-                                      query_images)
+                
+                query_pred = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
 
                 metric.record(np.array(query_pred.argmax(dim=1)[0].cpu()),
                               np.array(query_labels[0].cpu()),
@@ -129,32 +164,131 @@ def main(_run, _config, _log):
             classIoU, meanIoU = metric.get_mIoU(labels=sorted(labels), n_run=run)
             classIoU_binary, meanIoU_binary = metric.get_mIoU_binary(n_run=run)
 
-            _run.log_scalar('classIoU', classIoU.tolist())
+            '''_run.log_scalar('classIoU', classIoU.tolist())
             _run.log_scalar('meanIoU', meanIoU.tolist())
             _run.log_scalar('classIoU_binary', classIoU_binary.tolist())
             _run.log_scalar('meanIoU_binary', meanIoU_binary.tolist())
             _log.info(f'classIoU: {classIoU}')
             _log.info(f'meanIoU: {meanIoU}')
             _log.info(f'classIoU_binary: {classIoU_binary}')
-            _log.info(f'meanIoU_binary: {meanIoU_binary}')
+            _log.info(f'meanIoU_binary: {meanIoU_binary}')'''
 
     classIoU, classIoU_std, meanIoU, meanIoU_std = metric.get_mIoU(labels=sorted(labels))
     classIoU_binary, classIoU_std_binary, meanIoU_binary, meanIoU_std_binary = metric.get_mIoU_binary()
 
-    _log.info('----- Final Result -----')
-    _run.log_scalar('final_classIoU', classIoU.tolist())
-    _run.log_scalar('final_classIoU_std', classIoU_std.tolist())
-    _run.log_scalar('final_meanIoU', meanIoU.tolist())
-    _run.log_scalar('final_meanIoU_std', meanIoU_std.tolist())
-    _run.log_scalar('final_classIoU_binary', classIoU_binary.tolist())
-    _run.log_scalar('final_classIoU_std_binary', classIoU_std_binary.tolist())
-    _run.log_scalar('final_meanIoU_binary', meanIoU_binary.tolist())
-    _run.log_scalar('final_meanIoU_std_binary', meanIoU_std_binary.tolist())
-    _log.info(f'classIoU mean: {classIoU}')
-    _log.info(f'classIoU std: {classIoU_std}')
-    _log.info(f'meanIoU mean: {meanIoU}')
-    _log.info(f'meanIoU std: {meanIoU_std}')
-    _log.info(f'classIoU_binary mean: {classIoU_binary}')
-    _log.info(f'classIoU_binary std: {classIoU_std_binary}')
-    _log.info(f'meanIoU_binary mean: {meanIoU_binary}')
-    _log.info(f'meanIoU_binary std: {meanIoU_std_binary}')
+    print('----- Final Result -----')
+    print('final_classIoU', classIoU.tolist())
+    print('final_classIoU_std', classIoU_std.tolist())
+    print('final_meanIoU', meanIoU.tolist())
+    print('final_meanIoU_std', meanIoU_std.tolist())
+    print('final_classIoU_binary', classIoU_binary.tolist())
+    print('final_classIoU_std_binary', classIoU_std_binary.tolist())
+    print('final_meanIoU_binary', meanIoU_binary.tolist())
+    print('final_meanIoU_std_binary', meanIoU_std_binary.tolist())
+    print(f'classIoU mean: {classIoU}')
+    print(f'classIoU std: {classIoU_std}')
+    print(f'meanIoU mean: {meanIoU}')
+    print(f'meanIoU std: {meanIoU_std}')
+    print(f'classIoU_binary mean: {classIoU_binary}')
+    print(f'classIoU_binary std: {classIoU_std_binary}')
+    print(f'meanIoU_binary mean: {meanIoU_binary}')
+    print(f'meanIoU_binary std: {meanIoU_std_binary}')
+
+
+if __name__ == '__main__':
+    assert LooseVersion(torch.__version__) >= LooseVersion('0.4.0'), \
+        'PyTorch>=0.4.0 is required'
+
+    parser = argparse.ArgumentParser(
+        description="PyTorch Semantic Segmentation Validation"
+    )
+    parser.add_argument(
+        "--cfg",
+        default="config/ade20k-resnet50dilated-ppm_deepsup.yaml",
+        metavar="FILE",
+        help="path to config file",
+        type=str,
+    )
+    parser.add_argument(
+        "--gpus",
+        default="0-3",
+        help="gpus to use, e.g. 0-3 or 0,1,2,3"
+    )
+    parser.add_argument(
+        "opts",
+        help="Modify config options using the command-line",
+        default=None,
+        nargs=argparse.REMAINDER,
+    )
+    parser.add_argument(
+        "--debug_with_gt",
+        action='store_true',
+        help="put gt in the memory",
+    )
+    parser.add_argument(
+        "--debug_with_random",
+        action='store_true',
+        help="put gt in the memory",
+    )
+    parser.add_argument(
+        "--debug_with_double_random",
+        action='store_true',
+        help="put gt in the memory",
+    )
+    parser.add_argument(
+        "--debug_with_double_complete_random",
+        action='store_true',
+        help="put gt in the memory",
+    )
+    parser.add_argument(
+        "--debug_with_translated_gt",
+        action='store_true',
+        help="put gt in the memory",
+    )
+    parser.add_argument(
+        "--debug_with_randomSegNoise",
+        action='store_true',
+        help="put gt in the memory",
+    )
+
+
+    args = parser.parse_args()
+
+    cfg.merge_from_file(args.cfg)
+    cfg.merge_from_list(args.opts)
+    cfg.DATASET.debug_with_gt = args.debug_with_gt
+    cfg.DATASET.debug_with_random = args.debug_with_random
+    cfg.DATASET.debug_with_translated_gt = args.debug_with_translated_gt
+    cfg.DATASET.debug_with_double_random = args.debug_with_double_random
+    cfg.DATASET.debug_with_double_complete_random = args.debug_with_double_complete_random
+    cfg.DATASET.debug_with_randomSegNoise = args.debug_with_randomSegNoise
+    # cfg.freeze()
+
+    logger = setup_logger(distributed_rank=0)   # TODO
+    logger.info("Loaded configuration file {}".format(args.cfg))
+    logger.info("Running with config:\n{}".format(cfg))
+
+    # absolute paths of model weights
+    cfg.MODEL.weights_enc_query = os.path.join(
+        cfg.DIR, 'enc_query_' + cfg.VAL.checkpoint)
+    cfg.MODEL.weights_enc_memory = os.path.join(
+        cfg.DIR, 'enc_memory_' + cfg.VAL.checkpoint)
+    cfg.MODEL.weights_att_query = os.path.join(
+        cfg.DIR, 'att_query_' + cfg.VAL.checkpoint)
+    cfg.MODEL.weights_att_memory = os.path.join(
+        cfg.DIR, 'att_memory_' + cfg.VAL.checkpoint)
+    cfg.MODEL.weights_decoder = os.path.join(
+        cfg.DIR, 'decoder_' + cfg.VAL.checkpoint)
+    assert os.path.exists(cfg.MODEL.weights_enc_query) and os.path.exists(cfg.MODEL.weights_enc_memory) and \
+            os.path.exists(cfg.MODEL.weights_att_query) and os.path.exists(cfg.MODEL.weights_att_memory) and \
+            os.path.exists(cfg.MODEL.weights_decoder), "checkpoint does not exitst!"
+
+    if not os.path.isdir(os.path.join(cfg.DIR, "result")):
+        os.makedirs(os.path.join(cfg.DIR, "result"))
+
+    # Parse gpu ids
+    gpus = parse_devices(args.gpus)
+    gpus = [x.replace('gpu', '') for x in gpus]
+    gpus = [int(x) for x in gpus]
+
+    main(cfg, gpus)

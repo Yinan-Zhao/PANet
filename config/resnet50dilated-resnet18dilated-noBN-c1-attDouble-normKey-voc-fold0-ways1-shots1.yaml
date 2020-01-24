@@ -42,8 +42,9 @@ TRAIN:
   permute_labels: False
 
 VAL:
+  n_runs: 5
   visualize: False
-  checkpoint: "epoch_25.pth"
+  checkpoint: "epoch_40000.pth"
 
 TEST:
   checkpoint: "epoch_25.pth"

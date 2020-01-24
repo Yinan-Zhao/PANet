@@ -22,6 +22,7 @@ from dataloaders.transforms import ToTensorNormalize
 from dataloaders.transforms import Resize
 from util.metric import Metric
 from util.utils import set_seed, CLASS_LABELS, get_bbox
+from lib.utils import as_numpy
 
 
 def visualize_result(data, pred, dir_result):
@@ -185,8 +186,8 @@ def main(cfg, gpus):
 
                 if cfg.VAL.visualize:
                     visualize_result(
-                        (feed_dict['img_data'], feed_dict['seg_label'], '%05d'%(count)),
-                        np.array(query_pred.argmax(dim=1)[0].cpu()),
+                        (feed_dict['img_data'], as_numpy(feed_dict['seg_label'][0]), '%05d'%(count)),
+                        as_numpy(np.array(query_pred.argmax(dim=1)[0].cpu())),
                         os.path.join(cfg.DIR, 'result')
                     )
                 count += 1

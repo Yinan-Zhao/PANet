@@ -23,6 +23,23 @@ from dataloaders.transforms import Resize
 from util.metric import Metric
 from util.utils import set_seed, CLASS_LABELS, get_bbox
 
+
+def visualize_result(data, pred, dir_result):
+    (img, seg, info) = data
+
+    # segmentation
+    seg_color = colorEncodeGray(seg, colors)
+
+    # prediction
+    pred_color = colorEncodeGray(pred, colors)
+
+    # aggregate images and save
+    im_vis = np.concatenate((img, seg_color, pred_color),
+                            axis=1).astype(np.uint8)
+
+    img_name = info
+    Image.fromarray(im_vis).save(os.path.join(dir_result, img_name+'.png'))
+
 def data_preprocess(sample_batched, cfg):
     feed_dict = {}
     feed_dict['img_data'] = sample_batched['query_images'][0].cuda()
@@ -151,6 +168,7 @@ def main(cfg, gpus):
                                     num_workers=1, pin_memory=True, drop_last=False)
             print(f"Total # of Data: {len(dataset)}")
 
+            count = 0
 
             for sample_batched in tqdm.tqdm(testloader):
                 feed_dict = data_preprocess(sample_batched, cfg)
@@ -164,6 +182,14 @@ def main(cfg, gpus):
                 metric.record(np.array(query_pred.argmax(dim=1)[0].cpu()),
                               np.array(feed_dict['seg_label'][0].cpu()),
                               labels=label_ids, n_run=run)
+
+                if cfg.VAL.visualize:
+                visualize_result(
+                    (feed_dict['img_data'], feed_dict['query_labels'], '%05d'%(count)),
+                    np.array(query_pred.argmax(dim=1)[0].cpu()),
+                    os.path.join(cfg.DIR, 'result')
+                )
+                count += 1
 
             classIoU, meanIoU = metric.get_mIoU(labels=sorted(labels), n_run=run)
             classIoU_binary, meanIoU_binary = metric.get_mIoU_binary(n_run=run)

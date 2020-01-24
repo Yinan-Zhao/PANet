@@ -124,6 +124,11 @@ def colorEncode(labelmap, colors, mode='RGB'):
     else:
         return labelmap_rgb
 
+def colorEncodeGray(labelmap):
+    labelmap = labelmap.astype('int')
+    labelmap_rgb = 255*(1-labelmap)
+    labelmap_rgb = labelmap_rgb.astype(np.uint8)
+    return np.stack([labelmap_rgb,labelmap_rgb,labelmap_rgb], axis=2)
 
 def accuracy(preds, label):
     valid = (label >= 0)

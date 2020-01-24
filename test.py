@@ -15,7 +15,7 @@ from torchvision.transforms import Compose
 
 from config import cfg
 from models import ModelBuilder, SegmentationAttentionSeparateModule
-from utils_seg import AverageMeter, colorEncode, accuracy, intersectionAndUnion, parse_devices, setup_logger
+from utils_seg import AverageMeter, colorEncodeGray, accuracy, intersectionAndUnion, parse_devices, setup_logger
 
 #from dataloaders.customized import voc_fewshot, coco_fewshot
 from dataloaders.transforms import ToTensorNormalize

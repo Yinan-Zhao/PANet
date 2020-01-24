@@ -44,7 +44,7 @@ TRAIN:
 VAL:
   n_runs: 5
   visualize: False
-  checkpoint: "epoch_40000.pth"
+  checkpoint: "iter_50000.pth"
 
 TEST:
   checkpoint: "epoch_25.pth"

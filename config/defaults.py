@@ -135,7 +135,7 @@ _C.VAL.n_iters = 1000
 # output visualization during validation
 _C.VAL.visualize = False
 # the checkpoint to evaluate on
-_C.VAL.checkpoint = "epoch_20.pth"
+_C.VAL.checkpoint = "iter_50000.pth"
 _C.VAL.permute_labels = False
 _C.VAL.n_runs = 5
 _C.VAL.seed = 321

@@ -6,9 +6,9 @@ https://github.com/tonylins/pytorch-mobilenet-v2
 import torch.nn as nn
 import math
 from .utils import load_url
-from lib.nn import SynchronizedBatchNorm2d
-
-BatchNorm2d = SynchronizedBatchNorm2d
+#from lib.nn import SynchronizedBatchNorm2d
+#BatchNorm2d = SynchronizedBatchNorm2d
+from torch.nn import BatchNorm2d
 
 
 __all__ = ['mobilenetv2']

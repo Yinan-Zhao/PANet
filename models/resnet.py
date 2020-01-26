@@ -1,8 +1,9 @@
 import torch.nn as nn
 import math
 from .utils import load_url
-from lib.nn import SynchronizedBatchNorm2d
-BatchNorm2d = SynchronizedBatchNorm2d
+#from lib.nn import SynchronizedBatchNorm2d
+#BatchNorm2d = SynchronizedBatchNorm2d
+from torch.nn import BatchNorm2d
 
 
 __all__ = ['ResNet', 'resnet18', 'resnet50', 'resnet101'] # resnet101 is coming soon!

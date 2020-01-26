@@ -251,7 +251,7 @@ def main(cfg, gpus):
         #device_ids=gpus)
     # For sync bn
     #patch_replication_callback(segmentation_module)
-    segmentation_module = nn.DataParallel(segmentation_module, device_ids=gpus)
+    #segmentation_module = nn.DataParallel(segmentation_module, device_ids=gpus)
     segmentation_module.cuda()
 
     # Set up optimizers

@@ -156,6 +156,7 @@ def adjust_learning_rate(optimizers, cur_iter, cfg):
 
 def main(cfg, gpus):
     # Network Builders
+    torch.cuda.set_device(gpus[0])
     print('###### Create model ######')
     net_enc_query = ModelBuilder.build_encoder(
         arch=cfg.MODEL.arch_encoder.lower(),

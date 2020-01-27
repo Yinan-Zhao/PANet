@@ -181,15 +181,14 @@ def main(cfg, gpus):
 
                 if cfg.is_debug:
                     query_pred, qread, qval, qk_b, mk_b, mv_b, p, feature_enc, feature_memory = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
-                    print(sample_batched['query_ids'][0][0])
-                    np.save('debug/qread-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), qread.detach().cpu().float().numpy())
-                    np.save('debug/qval-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), qval.detach().cpu().float().numpy())
-                    np.save('debug/qk_b-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), qk_b.detach().cpu().float().numpy())
-                    np.save('debug/mk_b-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), mk_b.detach().cpu().float().numpy())
-                    np.save('debug/mv_b-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), mv_b.detach().cpu().float().numpy())
-                    np.save('debug/p-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), p.detach().cpu().float().numpy())
-                    np.save('debug/feature_enc-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), feature_enc[-1].detach().cpu().float().numpy())
-                    np.save('debug/feature_memory-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), feature_memory[-1].detach().cpu().float().numpy())
+                    np.save('debug/qread-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), qread.detach().cpu().float().numpy())
+                    np.save('debug/qval-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), qval.detach().cpu().float().numpy())
+                    np.save('debug/qk_b-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), qk_b.detach().cpu().float().numpy())
+                    np.save('debug/mk_b-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), mk_b.detach().cpu().float().numpy())
+                    np.save('debug/mv_b-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), mv_b.detach().cpu().float().numpy())
+                    np.save('debug/p-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), p.detach().cpu().float().numpy())
+                    np.save('debug/feature_enc-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), feature_enc[-1].detach().cpu().float().numpy())
+                    np.save('debug/feature_memory-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), feature_memory[-1].detach().cpu().float().numpy())
                 else:
                     query_pred = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
 

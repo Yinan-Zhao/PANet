@@ -88,6 +88,8 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
     class_ids = [paired_sample[cumsum_idx[i]]['basic_class_id'] for i in range(n_ways)]
 
     # support images
+    support_ids = [[paired_sample[cumsum_idx[i] + j]['id'] for j in range(n_shots)]
+                      for i in range(n_ways)]
     support_images = [[paired_sample[cumsum_idx[i] + j]['image'] for j in range(n_shots)]
                       for i in range(n_ways)] # [way][shot]
     support_images_t = [[paired_sample[cumsum_idx[i] + j]['image_t'] for j in range(n_shots)]
@@ -103,6 +105,8 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
 
 
     # query images, masks and class indices
+    query_ids = [paired_sample[cumsum_idx[i+1] - j - 1]['id'] for i in range(n_ways)
+                    for j in range(cnt_query[i])]
     query_images = [paired_sample[cumsum_idx[i+1] - j - 1]['image'] for i in range(n_ways)
                     for j in range(cnt_query[i])]
     query_images_t = [paired_sample[cumsum_idx[i+1] - j - 1]['image_t'] for i in range(n_ways)
@@ -161,11 +165,13 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
 
     return {'class_ids': class_ids,
 
+            'support_ids': support_ids,
             'support_images_t': support_images_t,
             'support_images': support_images,
             'support_labels': support_labels_return,
             'support_mask': support_mask,
 
+            'query_ids': query_ids,
             'query_images_t': query_images_t,
             'query_images': query_images,
             'query_labels': query_labels_tmp,

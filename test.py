@@ -120,7 +120,7 @@ def main(cfg, gpus):
 
     crit = nn.NLLLoss(ignore_index=255)
 
-    segmentation_module = SegmentationAttentionSeparateModule(net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, zero_qval=cfg.MODEL.zero_qval, qval_qread_BN=cfg.MODEL.qval_qread_BN, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, debug=False, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate)
+    segmentation_module = SegmentationAttentionSeparateModule(net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, zero_qval=cfg.MODEL.zero_qval, qval_qread_BN=cfg.MODEL.qval_qread_BN, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, debug=cfg.is_debug, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate)
 
     segmentation_module = nn.DataParallel(segmentation_module, device_ids=gpus)
     segmentation_module.cuda()
@@ -178,8 +178,19 @@ def main(cfg, gpus):
                     label_ids = [coco_cls_ids.index(x) + 1 for x in sample_batched['class_ids']]
                 else:
                     label_ids = list(sample_batched['class_ids'])
-                
-                query_pred = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
+
+                if cfg.is_debug:
+                    query_pred, qread, qval, qk_b, mk_b, mv_b, p, feature_enc, feature_memory = segmentation_module(feed_dict, segSize=segSize)
+                    np.save('debug/qread-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), qread.detach().cpu().float().numpy())
+                    np.save('debug/qval-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), qval.detach().cpu().float().numpy())
+                    np.save('debug/qk_b-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), qk_b.detach().cpu().float().numpy())
+                    np.save('debug/mk_b-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), mk_b.detach().cpu().float().numpy())
+                    np.save('debug/mv_b-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), mv_b.detach().cpu().float().numpy())
+                    np.save('debug/p-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), p.detach().cpu().float().numpy())
+                    np.save('debug/feature_enc-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), feature_enc[-1].detach().cpu().float().numpy())
+                    np.save('debug/feature_memory-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), feature_memory[-1].detach().cpu().float().numpy())
+                else:
+                    query_pred = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
 
                 metric.record(np.array(query_pred.argmax(dim=1)[0].cpu()),
                               np.array(feed_dict['seg_label'][0].cpu()),
@@ -285,7 +296,11 @@ if __name__ == '__main__':
         action='store_true',
         help="put gt in the memory",
     )
-
+    parser.add_argument(
+        "--is_debug",
+        action='store_true',
+        help="store intermediate results, such as probability",
+    )
 
     args = parser.parse_args()
 

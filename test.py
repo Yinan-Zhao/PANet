@@ -326,6 +326,18 @@ if __name__ == '__main__':
         action='store_true',
         help="evaluate from scratch",
     )
+    parser.add_argument(
+        "n_runs",
+        help="number of runs in evaluation",
+        default=3,
+        type=int
+    )
+    parser.add_argument(
+        "--checkpoint",
+        default='iter_10000.pth',
+        help="which checkpoint to evaluate",
+        type=str,
+    )
 
     args = parser.parse_args()
 
@@ -340,6 +352,8 @@ if __name__ == '__main__':
     cfg.is_debug = args.is_debug
     cfg.eval_att_voting = args.eval_att_voting
     cfg.VAL.visualize = args.visualize
+    cfg.VAL.n_runs = args.n_runs
+    cfg.VAL.checkpoint = args.checkpoint
     # cfg.freeze()
 
     logger = setup_logger(distributed_rank=0)   # TODO

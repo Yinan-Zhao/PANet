@@ -216,7 +216,7 @@ def main(cfg, gpus):
                     img = imread(os.path.join(cfg.DATASET.data_dir, 'JPEGImages', query_name+'.jpg'))
                     img = imresize(img, cfg.DATASET.input_size)
                     visualize_result(
-                        (255.*img, as_numpy(feed_dict['seg_label'][0].cpu()), '%05d'%(count)),
+                        (img, as_numpy(feed_dict['seg_label'][0].cpu()), '%05d'%(count)),
                         as_numpy(np.array(query_pred.argmax(dim=1)[0].cpu())),
                         os.path.join(cfg.DIR, 'result')
                     )

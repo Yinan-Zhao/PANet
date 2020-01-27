@@ -43,7 +43,7 @@ TRAIN:
 
 VAL:
   n_runs: 3
-  visualize: True
+  visualize: False
   checkpoint: "iter_10000.pth"
 
 TEST:

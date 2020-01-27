@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 import torch.backends.cudnn as cudnn
 from torchvision.transforms import Compose
 from PIL import Image
+from imageio import imread
 
 from config import cfg
 from models import ModelBuilder, SegmentationAttentionSeparateModule
@@ -210,8 +211,12 @@ def main(cfg, gpus):
                     #print(as_numpy(feed_dict['seg_label'][0].cpu()).shape)
                     #print(as_numpy(np.array(query_pred.argmax(dim=1)[0].cpu())).shape)
                     #print(feed_dict['img_data'].cpu().shape)
+                    query_name = sample_batched['query_ids'][0][0]
+                    support_name = sample_batched['support_ids'][0][0][0]
+                    img = imread(os.path.join(cfg.DATASET.data_dir, query_name+'.jpg'))
+                    img = imresize(img, cfg.DATASET.input_size)
                     visualize_result(
-                        (as_numpy(feed_dict['img_data'].cpu()[0]).transpose(1,2,0), as_numpy(feed_dict['seg_label'][0].cpu()), '%05d'%(count)),
+                        (img, as_numpy(feed_dict['seg_label'][0].cpu()), '%05d'%(count)),
                         as_numpy(np.array(query_pred.argmax(dim=1)[0].cpu())),
                         os.path.join(cfg.DIR, 'result')
                     )
@@ -333,6 +338,12 @@ if __name__ == '__main__':
         type=int
     )
     parser.add_argument(
+        "--fold_idx",
+        help="fold index",
+        default=-1,
+        type=int
+    )
+    parser.add_argument(
         "--checkpoint",
         default='iter_10000.pth',
         help="which checkpoint to evaluate",
@@ -354,6 +365,8 @@ if __name__ == '__main__':
     cfg.VAL.visualize = args.visualize
     cfg.VAL.n_runs = args.n_runs
     cfg.VAL.checkpoint = args.checkpoint
+    if args.fold_idx >= 0:
+        cfg.VAL.fold_idx = args.fold_idx
     # cfg.freeze()
 
     logger = setup_logger(distributed_rank=0)   # TODO

@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 import torch.backends.cudnn as cudnn
 from torchvision.transforms import Compose
 from PIL import Image
-from imageio import imread
+from scipy.misc import imread, imresize
 
 from config import cfg
 from models import ModelBuilder, SegmentationAttentionSeparateModule

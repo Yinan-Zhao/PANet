@@ -312,6 +312,7 @@ if __name__ == '__main__':
     cfg.DATASET.debug_with_double_random = args.debug_with_double_random
     cfg.DATASET.debug_with_double_complete_random = args.debug_with_double_complete_random
     cfg.DATASET.debug_with_randomSegNoise = args.debug_with_randomSegNoise
+    cfg.is_debug = args.is_debug
     # cfg.freeze()
 
     logger = setup_logger(distributed_rank=0)   # TODO

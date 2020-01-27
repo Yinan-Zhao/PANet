@@ -327,7 +327,7 @@ if __name__ == '__main__':
         help="evaluate from scratch",
     )
     parser.add_argument(
-        "n_runs",
+        "--n_runs",
         help="number of runs in evaluation",
         default=3,
         type=int

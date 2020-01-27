@@ -213,7 +213,7 @@ def main(cfg, gpus):
                     #print(feed_dict['img_data'].cpu().shape)
                     query_name = sample_batched['query_ids'][0][0]
                     support_name = sample_batched['support_ids'][0][0][0]
-                    img = imread(os.path.join(cfg.DATASET.data_dir, query_name+'.jpg'))
+                    img = imread(os.path.join(cfg.DATASET.data_dir, 'JPEGImages', query_name+'.jpg'))
                     img = imresize(img, cfg.DATASET.input_size)
                     visualize_result(
                         (255.*img, as_numpy(feed_dict['seg_label'][0].cpu()), '%05d'%(count)),

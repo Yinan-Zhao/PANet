@@ -191,6 +191,9 @@ def main(cfg, gpus):
                         mask_voting = mask_voting_flat.view(mask_voting_flat.shape[0], height, width)
                         mask_voting = torch.unsqueeze(mask_voting, 0)
                         query_pred = nn.functional.interpolate(mask_voting[:,1:], size=cfg.DATASET.input_size, mode='bilinear', align_corners=False)
+                        if cfg.is_debug:
+                            np.save('debug/img_refs_mask-%04d-%s-%s.npy'%(count, sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), img_refs_mask_resize.detach().cpu().float().numpy())
+                            np.save('debug/query_pred-%04d-%s-%s.npy'%(count, sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), query_pred.detach().cpu().float().numpy())
                     if cfg.is_debug:
                         np.save('debug/qread-%04d-%s-%s.npy'%(count, sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), qread.detach().cpu().float().numpy())
                         np.save('debug/qval-%04d-%s-%s.npy'%(count, sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), qval.detach().cpu().float().numpy())

@@ -198,7 +198,7 @@ def main(cfg, gpus):
                     mask_voting_flat = torch.mm(img_refs_mask_resize_flat, p)
                     mask_voting = mask_voting_flat.view(mask_voting_flat.shape[0], height, width)
                     mask_voting = torch.unsqueeze(mask_voting, 0)
-                    scores_tmp = nn.functional.interpolate(mask_voting[:,1:], size=cfg.DATASET.input_size, mode='bilinear', align_corners=False)
+                    query_pred = nn.functional.interpolate(mask_voting[:,1:], size=cfg.DATASET.input_size, mode='bilinear', align_corners=False)
                 else:
                     query_pred = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
 

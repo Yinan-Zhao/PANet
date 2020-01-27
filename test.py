@@ -181,6 +181,7 @@ def main(cfg, gpus):
 
                 if cfg.is_debug:
                     query_pred, qread, qval, qk_b, mk_b, mv_b, p, feature_enc, feature_memory = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
+                    print(sample_batched['query_ids'][0])
                     np.save('debug/qread-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), qread.detach().cpu().float().numpy())
                     np.save('debug/qval-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), qval.detach().cpu().float().numpy())
                     np.save('debug/qk_b-%s-%s.npy'%(sample_batched['query_ids'][0], sample_batched['support_ids'][0][0]), qk_b.detach().cpu().float().numpy())

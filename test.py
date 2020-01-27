@@ -120,7 +120,7 @@ def main(cfg, gpus):
 
     crit = nn.NLLLoss(ignore_index=255)
 
-    segmentation_module = SegmentationAttentionSeparateModule(net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, zero_qval=cfg.MODEL.zero_qval, qval_qread_BN=cfg.MODEL.qval_qread_BN, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, debug=cfg.is_debug, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate)
+    segmentation_module = SegmentationAttentionSeparateModule(net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, zero_qval=cfg.MODEL.zero_qval, qval_qread_BN=cfg.MODEL.qval_qread_BN, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, debug=cfg.is_debug or cfg.eval_att_voting, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate)
 
     segmentation_module = nn.DataParallel(segmentation_module, device_ids=gpus)
     segmentation_module.cuda()
@@ -189,6 +189,16 @@ def main(cfg, gpus):
                     np.save('debug/p-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), p.detach().cpu().float().numpy())
                     np.save('debug/feature_enc-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), feature_enc[-1].detach().cpu().float().numpy())
                     np.save('debug/feature_memory-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), feature_memory[-1].detach().cpu().float().numpy())
+                if cfg.eval_att_voting:
+                    scores_tmp, qread, qval, qk_b, mk_b, mv_b, p, feature_enc, feature_memory = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
+                    height, width = qread.shape[-2], qread.shape[-1]
+                    assert p.shape[0] == height*width
+                    img_refs_mask_resize = nn.functional.interpolate(img_refs_mask[0].cuda(), size=(height, width), mode='nearest')
+                    img_refs_mask_resize_flat = img_refs_mask_resize[:,0,:,:].view(img_refs_mask_resize.shape[0], -1)
+                    mask_voting_flat = torch.mm(img_refs_mask_resize_flat, p)
+                    mask_voting = mask_voting_flat.view(mask_voting_flat.shape[0], height, width)
+                    mask_voting = torch.unsqueeze(mask_voting, 0)
+                    scores_tmp = nn.functional.interpolate(mask_voting[:,1:], size=cfg.DATASET.input_size, mode='bilinear', align_corners=False)
                 else:
                     query_pred = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
 
@@ -297,6 +307,11 @@ if __name__ == '__main__':
         help="put gt in the memory",
     )
     parser.add_argument(
+        "--eval_att_voting",
+        action='store_true',
+        help="evaluate with attention-based voting",
+    )
+    parser.add_argument(
         "--is_debug",
         action='store_true',
         help="store intermediate results, such as probability",
@@ -313,6 +328,7 @@ if __name__ == '__main__':
     cfg.DATASET.debug_with_double_complete_random = args.debug_with_double_complete_random
     cfg.DATASET.debug_with_randomSegNoise = args.debug_with_randomSegNoise
     cfg.is_debug = args.is_debug
+    cfg.eval_att_voting = args.eval_att_voting
     # cfg.freeze()
 
     logger = setup_logger(distributed_rank=0)   # TODO

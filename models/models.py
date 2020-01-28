@@ -301,7 +301,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 #print('memoryAttention mask: %f' % (time.time()-start)) 
 
                 if self.att_voting:
-                    mval = downsample_5d(feed_dict['img_refs_mask'], downsample_rate=8, mode='nearest')
+                    mval = self.downsample_5d(feed_dict['img_refs_mask'], downsample_rate=8, mode='nearest')
                     qmask = torch.ones_like(qkey)[:,0:1] > 0.
                     mmask = torch.ones_like(mkey)[:,0:1] > 0.
                     output_shape = qval.shape

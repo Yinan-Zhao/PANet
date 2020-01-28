@@ -22,7 +22,7 @@ MODEL:
   fc_dim: 2048
   att_fc_dim: 512
   normalize_key: True
-  p_scalar: 100.0
+  p_scalar: 200.0
 
 TRAIN:
   n_iters: 60000

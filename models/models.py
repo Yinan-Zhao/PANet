@@ -404,6 +404,16 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             mask_feature_memory = self.memoryEncode(self.encoder_memory, feed_dict['img_refs_mask'], return_feature_maps=True)
             _, mval = self.memoryAttention(self.attention_memory, mask_feature_memory)
 
+            if self.att_voting:
+                mval = self.downsample_5d(feed_dict['img_refs_mask'], downsample_rate=8, mode='nearest')
+                qmask = torch.ones_like(qkey)[:,0:1] > 0.
+                mmask = torch.ones_like(mkey)[:,0:1] > 0.
+                output_shape = qval.shape
+                qread = self.maskRead(qkey, qmask, mkey, mval, mmask, (qval.shape[0], 3, qval.shape[2], qval.shape[3]))
+                qread = nn.functional.log_softmax(qread, dim=1)
+                pred = nn.functional.interpolate(qread[:,:-1,:,:], size=segSize, mode='bilinear', align_corners=False)
+                return pred
+
             if self.att_mat_downsample_rate != 1:
                 output_shape = (qval.shape[0], qval.shape[1], qval.shape[2]//self.att_mat_downsample_rate, qval.shape[3]//self.att_mat_downsample_rate)
                 qkey = nn.functional.interpolate(qkey, 

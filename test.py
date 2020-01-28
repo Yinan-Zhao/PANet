@@ -369,7 +369,7 @@ if __name__ == '__main__':
     cfg.VAL.n_runs = args.n_runs
     cfg.VAL.checkpoint = args.checkpoint
     if args.fold_idx >= 0:
-        cfg.VAL.fold_idx = args.fold_idx
+        cfg.TASK.fold_idx = args.fold_idx
     # cfg.freeze()
 
     logger = setup_logger(distributed_rank=0)   # TODO

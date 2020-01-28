@@ -305,7 +305,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     qmask = torch.ones_like(qkey)[:,0:1] > 0.
                     mmask = torch.ones_like(mkey)[:,0:1] > 0.
                     output_shape = qval.shape
-                    qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape)
+                    qread = self.maskRead(qkey, qmask, mkey, mval, mmask, (qval.shape[0], 3, qval.shape[2], qval.shape[3]))
                     qread = nn.functional.log_softmax(qread, dim=1)
                     return qread[:,:-1,:,:]
 

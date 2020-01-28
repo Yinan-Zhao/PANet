@@ -352,6 +352,12 @@ if __name__ == '__main__':
         help="which checkpoint to evaluate",
         type=str,
     )
+    parser.add_argument(
+        "--data_split",
+        default='trainaug',
+        help="data split",
+        type=str,
+    )
 
     args = parser.parse_args()
 
@@ -365,6 +371,7 @@ if __name__ == '__main__':
     cfg.DATASET.debug_with_randomSegNoise = args.debug_with_randomSegNoise
     cfg.is_debug = args.is_debug
     cfg.eval_att_voting = args.eval_att_voting
+    cfg.DATASET.data_split = args.data_split
     cfg.VAL.visualize = args.visualize
     cfg.VAL.n_runs = args.n_runs
     cfg.VAL.checkpoint = args.checkpoint

@@ -306,7 +306,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     mmask = torch.ones_like(mkey)[:,0:1] > 0.
                     output_shape = qval.shape
                     qread = self.maskRead(qkey, qmask, mkey, mval, mmask, (qval.shape[0], 3, qval.shape[2], qval.shape[3]))
-                    qread = nn.functional.log_softmax(qread, dim=1)
+                    #qread = nn.functional.log_softmax(qread, dim=1)
                     loss = self.crit(qread[:,:-1,:,:], feed_dict['seg_label'])
                     acc = self.pixel_acc(qread[:,:-1,:,:], feed_dict['seg_label'])
                     return loss, acc

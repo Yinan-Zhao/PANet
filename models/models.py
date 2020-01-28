@@ -169,7 +169,7 @@ class SegmentationAttentionModule(SegmentationModuleBase):
             return pred 
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, qval_qread_BN=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, qval_qread_BN=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, att_voting=False, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -190,6 +190,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.memory_noLabel = memory_noLabel
         self.mask_feat_downsample_rate = mask_feat_downsample_rate
         self.att_mat_downsample_rate = att_mat_downsample_rate
+        self.att_voting = att_voting
         if qval_qread_BN:
             self.bn_val = BatchNorm2d(net_att_query.out_dim)
             self.bn_read = BatchNorm2d(net_att_memory.out_dim)
@@ -260,13 +261,13 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         vals = torch.stack(val_, dim=2)
         return keys, vals
 
-    def downsample_5d(self, feat, downsample_rate):
+    def downsample_5d(self, feat, downsample_rate, mode='bilinear'):
         # feat: b,dk,t,h,w
         feat_downsample = torch.zeros(feat.shape[0], feat.shape[1], feat.shape[2], feat.shape[3]//downsample_rate, feat.shape[4]//downsample_rate).cuda()
         for t in range(feat.shape[2]):
             feat_downsample[:,:,t,:,:] = nn.functional.interpolate(feat[:,:,t,:,:], 
                 size=(feat.shape[3]//downsample_rate, feat.shape[4]//downsample_rate), 
-                mode='bilinear')
+                mode=mode)
         return feat_downsample
 
     def forward(self, feed_dict, *, segSize=None):
@@ -297,7 +298,16 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 
                 #start = time.time()
                 _, mval = self.memoryAttention(self.attention_memory, mask_feature_memory)
-                #print('memoryAttention mask: %f' % (time.time()-start))  
+                #print('memoryAttention mask: %f' % (time.time()-start)) 
+
+                if self.att_voting:
+                    mval = downsample_5d(feed_dict['img_refs_mask'], downsample_rate=8, mode='nearest')
+                    qmask = torch.ones_like(qkey)[:,0:1] > 0.
+                    mmask = torch.ones_like(mkey)[:,0:1] > 0.
+                    output_shape = qval.shape
+                    qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape)
+                    qread = nn.functional.log_softmax(qread, dim=1)
+                    return qread[:,:-1,:,:]
 
                 if self.att_mat_downsample_rate != 1:
                     output_shape = (qval.shape[0], qval.shape[1], qval.shape[2]//self.att_mat_downsample_rate, qval.shape[3]//self.att_mat_downsample_rate)

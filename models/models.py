@@ -307,7 +307,9 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     output_shape = qval.shape
                     qread = self.maskRead(qkey, qmask, mkey, mval, mmask, (qval.shape[0], 3, qval.shape[2], qval.shape[3]))
                     qread = nn.functional.log_softmax(qread, dim=1)
-                    return qread[:,:-1,:,:]
+                    loss = self.crit(qread[:,:-1,:,:], feed_dict['seg_label'])
+                    acc = self.pixel_acc(qread[:,:-1,:,:], feed_dict['seg_label'])
+                    return loss, acc
 
                 if self.att_mat_downsample_rate != 1:
                     output_shape = (qval.shape[0], qval.shape[1], qval.shape[2]//self.att_mat_downsample_rate, qval.shape[3]//self.att_mat_downsample_rate)

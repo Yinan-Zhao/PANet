@@ -8,8 +8,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .utils import load_url
-#from lib.nn import SynchronizedBatchNorm2d
-#BatchNorm2d = SynchronizedBatchNorm2d
+from lib.nn import SynchronizedBatchNorm2d
+BatchNorm2d = SynchronizedBatchNorm2d
 
 from torch.nn import BatchNorm2d
 BN_MOMENTUM = 0.1

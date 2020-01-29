@@ -307,9 +307,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     mmask = torch.ones_like(mkey)[:,0:1] > 0.
                     output_shape = qval.shape
                     qread = self.maskRead(qkey, qmask, mkey, mval, mmask, (qval.shape[0], 3, qval.shape[2], qval.shape[3]))
+                    pred = self.decoder([qread])
                     #qread = nn.functional.log_softmax(qread, dim=1)
-                    loss = self.crit(qread[:,:-1,:,:], feed_dict['seg_label'])
-                    acc = self.pixel_acc(qread[:,:-1,:,:], feed_dict['seg_label'])
+                    loss = self.crit(pred, feed_dict['seg_label'])
+                    acc = self.pixel_acc(pred, feed_dict['seg_label'])
                     return loss, acc
 
                 if self.att_mat_downsample_rate != 1:
@@ -663,6 +664,11 @@ class ModelBuilder:
                 use_softmax=use_softmax)
         elif arch == 'c1_double':
             net_decoder = C1_Double(
+                num_class=num_class,
+                fc_dim=fc_dim,
+                use_softmax=use_softmax)
+        elif arch == 'c1_channel3':
+            net_decoder = C1_Channel3(
                 num_class=num_class,
                 fc_dim=fc_dim,
                 use_softmax=use_softmax)
@@ -1169,6 +1175,32 @@ class C1(nn.Module):
             x = nn.functional.log_softmax(x, dim=1)
 
         return x
+
+class C1_Channel3(nn.Module):
+    def __init__(self, num_class=150, fc_dim=2048, use_softmax=False):
+        super(C1_Channel3, self).__init__()
+        self.use_softmax = use_softmax
+
+        self.cbr = conv3x3_bn_relu(3, 3, 1)
+
+        # last conv
+        self.conv_last = nn.Conv2d(3, num_class, 1, 1, 0)
+
+    def forward(self, conv_out, segSize=None):
+        conv5 = conv_out[-1]
+        x = self.cbr(conv5)
+        x = self.conv_last(x)
+
+        if self.use_softmax: # is True during inference
+            x = nn.functional.interpolate(
+                x, size=segSize, mode='bilinear', align_corners=False)
+            x = nn.functional.softmax(x, dim=1)
+            #x = nn.functional.log_softmax(x, dim=1)
+        else:
+            x = nn.functional.log_softmax(x, dim=1)
+
+        return x
+
 
 class C1_Double(nn.Module):
     def __init__(self, num_class=150, fc_dim=2048, use_softmax=False):

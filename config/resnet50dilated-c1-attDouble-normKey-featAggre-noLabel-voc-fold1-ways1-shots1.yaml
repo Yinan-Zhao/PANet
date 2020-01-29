@@ -42,7 +42,7 @@ TRAIN:
   workers: 4
   disp_iter: 20
   seed: 304
-  save_freq: 500
+  save_freq: 10000
   permute_labels: False
 
 VAL:

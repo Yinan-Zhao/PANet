@@ -88,6 +88,7 @@ _C.MODEL.p_scalar = 40.0
 _C.MODEL.memory_feature_aggregation = False
 _C.MODEL.memory_noLabel = False
 _C.MODEL.att_voting = False
+_C.MODEL.mask_foreground = False
 
 # -----------------------------------------------------------------------------
 # Training

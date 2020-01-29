@@ -169,7 +169,7 @@ class SegmentationAttentionModule(SegmentationModuleBase):
             return pred 
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, qval_qread_BN=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, att_voting=False, debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, qval_qread_BN=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, att_voting=False, mask_foreground=False, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -191,6 +191,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.mask_feat_downsample_rate = mask_feat_downsample_rate
         self.att_mat_downsample_rate = att_mat_downsample_rate
         self.att_voting = att_voting
+        self.mask_foreground = mask_foreground
         if qval_qread_BN:
             self.bn_val = BatchNorm2d(net_att_query.out_dim)
             self.bn_read = BatchNorm2d(net_att_memory.out_dim)
@@ -329,7 +330,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     mval = self.downsample_5d(mval, downsample_rate=self.mask_feat_downsample_rate)
 
                 qmask = torch.ones_like(qkey)[:,0:1] > 0.
-                mmask = torch.ones_like(mkey)[:,0:1] > 0.
+                if self.mask_foreground:
+                    mmask = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=8, mode='nearest')
+                else:
+                    mmask = torch.ones_like(mkey)[:,0:1] > 0.
 
                 if self.normalize_key:
                     qkey = F.normalize(qkey, p=2, dim=1)
@@ -432,7 +436,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 mval = self.downsample_5d(mval, downsample_rate=self.mask_feat_downsample_rate)
 
             qmask = torch.ones_like(qkey)[:,0:1] > 0.
-            mmask = torch.ones_like(mkey)[:,0:1] > 0.
+            if self.mask_foreground:
+                mmask = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=8, mode='nearest')
+            else:
+                mmask = torch.ones_like(mkey)[:,0:1] > 0.
 
             if self.normalize_key:
                 qkey = F.normalize(qkey, p=2, dim=1)

@@ -181,7 +181,7 @@ def main(cfg, gpus):
                     label_ids = list(sample_batched['class_ids'])
 
                 if cfg.eval_att_voting or cfg.is_debug:
-                    scores_tmp, qread, qval, qk_b, mk_b, mv_b, p, feature_enc, feature_memory = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
+                    query_pred, qread, qval, qk_b, mk_b, mv_b, p, feature_enc, feature_memory = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
                     if cfg.eval_att_voting:
                         height, width = qread.shape[-2], qread.shape[-1]
                         assert p.shape[0] == height*width

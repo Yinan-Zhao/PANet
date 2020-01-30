@@ -334,7 +334,6 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 qmask = torch.ones_like(qkey)[:,0:1] > 0.
                 if self.mask_foreground:
                     mmask = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=8, mode='nearest') > 0.5
-                    np.save('/home/yz9244/PANet/mmask.npy', mmask)
                 else:
                     mmask = torch.ones_like(mkey)[:,0:1] > 0.
 

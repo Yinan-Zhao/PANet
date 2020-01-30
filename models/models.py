@@ -415,7 +415,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 mmask = torch.ones_like(mkey)[:,0:1] > 0.
                 output_shape = qval.shape
                 qread = self.maskRead(qkey, qmask, mkey, mval, mmask, (qval.shape[0], 3, qval.shape[2], qval.shape[3]))
-                pred = self.decoder([qread])
+                pred = self.decoder([qread], segSize=segSize)
                 
                 #qread = nn.functional.log_softmax(qread, dim=1)
                 #pred = nn.functional.interpolate(qread[:,:-1,:,:], size=segSize, mode='bilinear', align_corners=False)

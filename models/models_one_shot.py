@@ -1049,6 +1049,10 @@ class AttModule(nn.Module):
         conv5 = conv_out[-1]
         key = self.key_conv(conv5)
         value = self.value_conv(conv5)
+        print('conv5 shape')
+        print(conv5.shape)
+        print('key in shape')
+        print(key.shape)
 
         return key, value
 

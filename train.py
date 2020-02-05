@@ -208,9 +208,11 @@ def main(cfg, gpus):
     if data_name == 'VOC':
         from dataloaders.customized import voc_fewshot
         make_data = voc_fewshot
+        max_label = 20
     elif data_name == 'COCO':
         from dataloaders.customized import coco_fewshot
         make_data = coco_fewshot
+        max_label = 80
     else:
         raise ValueError('Wrong config for dataset!')
     labels = CLASS_LABELS[data_name][cfg.TASK.fold_idx]
@@ -237,11 +239,6 @@ def main(cfg, gpus):
         drop_last=True
     )
 
-    #segmentation_module = UserScatteredDataParallel(
-        #segmentation_module,
-        #device_ids=gpus)
-    # For sync bn
-    #patch_replication_callback(segmentation_module)
     #segmentation_module = nn.DataParallel(segmentation_module, device_ids=gpus)
     segmentation_module.cuda()
 
@@ -311,6 +308,7 @@ def main(cfg, gpus):
             checkpoint(nets, history, cfg, i_iter+1)
 
         if (i_iter+1) % cfg.TRAIN.eval_freq == 0:
+            metric = Metric(max_label=max_label, n_runs=cfg.VAL.n_runs)
             with torch.no_grad():
                 print ('----Evaluation----')
                 segmentation_module.eval()

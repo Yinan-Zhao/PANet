@@ -96,7 +96,7 @@ class ResNet_Deeplab(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x, return_feature_maps=True):
         # important: do not optimize the RESNET backbone
         x = self.conv1(x)
         x = self.bn1(x)
@@ -107,7 +107,10 @@ class ResNet_Deeplab(nn.Module):
         feat_layer2 = x
         feat_layer3 = self.layer3(x)
         x=torch.cat([feat_layer2,feat_layer3],dim=1)
-        return [x]
+        if return_feature_maps:
+            return [x]
+        else:
+            return x
 
 def load_resnet50_param(model, stop_layer='layer4'):
     resnet50 = torchvision.models.resnet50(pretrained=True)

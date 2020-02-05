@@ -109,11 +109,14 @@ def group_weight(module):
 
 def create_optimizers(nets, cfg):
     (net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit) = nets
-    optimizer_enc_query = torch.optim.SGD(
-        group_weight(net_enc_query),
-        lr=cfg.TRAIN.lr_encoder,
-        momentum=cfg.TRAIN.beta1,
-        weight_decay=cfg.TRAIN.weight_decay)
+    if cfg.TRAIN.fix_encoder:
+        optimizer_enc_query = None
+    else:
+        optimizer_enc_query = torch.optim.SGD(
+            group_weight(net_enc_query),
+            lr=cfg.TRAIN.lr_encoder,
+            momentum=cfg.TRAIN.beta1,
+            weight_decay=cfg.TRAIN.weight_decay)
     optimizer_enc_memory = torch.optim.SGD(
         group_weight(net_enc_memory),
         lr=cfg.TRAIN.lr_encoder,
@@ -142,8 +145,9 @@ def adjust_learning_rate(optimizers, cur_iter, cfg):
     cfg.TRAIN.running_lr_decoder = cfg.TRAIN.lr_decoder * scale_running_lr
 
     (optimizer_enc_query, optimizer_enc_memory, optimizer_att_query, optimizer_att_memory, optimizer_decoder) = optimizers
-    for param_group in optimizer_enc_query.param_groups:
-        param_group['lr'] = cfg.TRAIN.running_lr_encoder
+    if not cfg.TRAIN.fix_encoder:
+        for param_group in optimizer_enc_query.param_groups:
+            param_group['lr'] = cfg.TRAIN.running_lr_encoder
     for param_group in optimizer_enc_memory.param_groups:
         param_group['lr'] = cfg.TRAIN.running_lr_encoder
     for param_group in optimizer_att_query.param_groups:
@@ -161,44 +165,28 @@ def main(cfg, gpus):
     net_enc_query = ModelBuilder.build_encoder(
         arch=cfg.MODEL.arch_encoder.lower(),
         fc_dim=cfg.MODEL.fc_dim,
-        weights=cfg.MODEL.weights_enc_query)
-    if cfg.MODEL.memory_encoder_arch:
-        net_enc_memory = ModelBuilder.build_encoder_memory_separate(
-            arch=cfg.MODEL.memory_encoder_arch.lower(),
-            fc_dim=cfg.MODEL.fc_dim,
-            weights=cfg.MODEL.weights_enc_memory,
-            num_class=cfg.TASK.n_ways+1,
-            RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
-            segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)
-    else:
-        if cfg.MODEL.memory_encoder_noBN:
-            net_enc_memory = ModelBuilder.build_encoder_memory_separate(
-                arch=cfg.MODEL.arch_encoder.lower()+'_nobn',
-                fc_dim=cfg.MODEL.fc_dim,
-                weights=cfg.MODEL.weights_enc_memory,
-                num_class=cfg.TASK.n_ways+1,
-                RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
-                segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)
-        else:
-            net_enc_memory = ModelBuilder.build_encoder_memory_separate(
-                arch=cfg.MODEL.arch_encoder.lower(),
-                fc_dim=cfg.MODEL.fc_dim,
-                weights=cfg.MODEL.weights_enc_memory,
-                num_class=cfg.TASK.n_ways+1,
-                RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
-                segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate,
-                pretrained=cfg.memory_enc_pretrained)
-    net_att_query = ModelBuilder.build_att_query(
+        weights=cfg.MODEL.weights_enc_query,
+        fix_encoder=cfg.TRAIN.fix_encoder)
+    net_enc_memory = ModelBuilder.build_encoder_memory_separate(
+        arch=cfg.MODEL.memory_encoder_arch.lower(),
+        fc_dim=cfg.MODEL.fc_dim,
+        weights=cfg.MODEL.weights_enc_memory,
+        num_class=cfg.TASK.n_ways+1,
+        RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
+        segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)    
+    net_att_query = ModelBuilder.build_attention(
         arch=cfg.MODEL.arch_attention,
+        input_dim=cfg.MODEL.encoder_dim,
         fc_dim=cfg.MODEL.fc_dim,
         weights=cfg.MODEL.weights_att_query)
-    net_att_memory = ModelBuilder.build_att_memory(
+    net_att_memory = ModelBuilder.build_attention(
         arch=cfg.MODEL.arch_attention,
+        input_dim=cfg.MODEL.encoder_dim,
         fc_dim=cfg.MODEL.fc_dim,
-        att_fc_dim=cfg.MODEL.att_fc_dim,
         weights=cfg.MODEL.weights_att_memory)
     net_decoder = ModelBuilder.build_decoder(
         arch=cfg.MODEL.arch_decoder.lower(),
+        input_dim=cfg.MODEL.decoder_dim,
         fc_dim=cfg.MODEL.fc_dim,
         num_class=cfg.TASK.n_ways+1,
         weights=cfg.MODEL.weights_decoder)
@@ -207,10 +195,10 @@ def main(cfg, gpus):
 
     if cfg.MODEL.arch_decoder.endswith('deepsup'):
         segmentation_module = SegmentationAttentionSeparateModule(
-            net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, cfg.TRAIN.deep_sup_scale, zero_memory=cfg.MODEL.zero_memory, random_memory_bias=cfg.MODEL.random_memory_bias, random_memory_nobias=cfg.MODEL.random_memory_nobias, random_scale=cfg.MODEL.random_scale, zero_qval=cfg.MODEL.zero_qval, qval_qread_BN=cfg.MODEL.qval_qread_BN, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate, att_voting=cfg.MODEL.att_voting, mask_foreground=cfg.MODEL.mask_foreground)
+            net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, cfg.TRAIN.deep_sup_scale, zero_memory=cfg.MODEL.zero_memory, random_memory_bias=cfg.MODEL.random_memory_bias, random_memory_nobias=cfg.MODEL.random_memory_nobias, random_scale=cfg.MODEL.random_scale, zero_qval=cfg.MODEL.zero_qval, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate, segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate, mask_foreground=cfg.MODEL.mask_foreground)
     else:
         segmentation_module = SegmentationAttentionSeparateModule(
-            net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, random_memory_bias=cfg.MODEL.random_memory_bias, random_memory_nobias=cfg.MODEL.random_memory_nobias, random_scale=cfg.MODEL.random_scale, zero_qval=cfg.MODEL.zero_qval, qval_qread_BN=cfg.MODEL.qval_qread_BN, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate, att_voting=cfg.MODEL.att_voting, mask_foreground=cfg.MODEL.mask_foreground)
+            net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, random_memory_bias=cfg.MODEL.random_memory_bias, random_memory_nobias=cfg.MODEL.random_memory_nobias, random_scale=cfg.MODEL.random_scale, zero_qval=cfg.MODEL.zero_qval, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate, segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate, mask_foreground=cfg.MODEL.mask_foreground)
 
 
     print('###### Load data ######')
@@ -291,7 +279,8 @@ def main(cfg, gpus):
         # Backward
         loss.backward()
         for optimizer in optimizers:
-            optimizer.step()
+            if optimizer:
+                optimizer.step()
 
         # measure elapsed time
         batch_time.update(time.time() - tic)
@@ -319,8 +308,6 @@ def main(cfg, gpus):
             checkpoint(nets, history, cfg, i_iter+1)
 
     print('Training Done!')
-
-
 
 if __name__ == '__main__':
     assert LooseVersion(torch.__version__) >= LooseVersion('0.4.0'), \
@@ -393,7 +380,6 @@ if __name__ == '__main__':
     #print('gpus')
     #print(gpus)
     num_gpus = len(gpus)
-    cfg.TRAIN.batch_size = num_gpus * cfg.TRAIN.batch_size_per_gpu
 
     cfg.TRAIN.max_iters = cfg.TRAIN.n_iters
     cfg.TRAIN.running_lr_encoder = cfg.TRAIN.lr_encoder

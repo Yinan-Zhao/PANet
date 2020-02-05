@@ -77,43 +77,28 @@ def main(cfg, gpus):
     net_enc_query = ModelBuilder.build_encoder(
         arch=cfg.MODEL.arch_encoder.lower(),
         fc_dim=cfg.MODEL.fc_dim,
-        weights=cfg.MODEL.weights_enc_query)
-    if cfg.MODEL.memory_encoder_arch:
-        net_enc_memory = ModelBuilder.build_encoder_memory_separate(
-            arch=cfg.MODEL.memory_encoder_arch.lower(),
-            fc_dim=cfg.MODEL.fc_dim,
-            weights=cfg.MODEL.weights_enc_memory,
-            num_class=cfg.TASK.n_ways+1,
-            RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
-            segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)
-    else:
-        if cfg.MODEL.memory_encoder_noBN:
-            net_enc_memory = ModelBuilder.build_encoder_memory_separate(
-                arch=cfg.MODEL.arch_encoder.lower()+'_nobn',
-                fc_dim=cfg.MODEL.fc_dim,
-                weights=cfg.MODEL.weights_enc_memory,
-                num_class=cfg.TASK.n_ways+1,
-                RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
-                segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)
-        else:
-            net_enc_memory = ModelBuilder.build_encoder_memory_separate(
-                arch=cfg.MODEL.arch_encoder.lower(),
-                fc_dim=cfg.MODEL.fc_dim,
-                weights=cfg.MODEL.weights_enc_memory,
-                num_class=cfg.TASK.n_ways+1,
-                RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
-                segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)
-    net_att_query = ModelBuilder.build_att_query(
+        weights=cfg.MODEL.weights_enc_query,
+        fix_encoder=cfg.TRAIN.fix_encoder)
+    net_enc_memory = ModelBuilder.build_encoder_memory_separate(
+        arch=cfg.MODEL.memory_encoder_arch.lower(),
+        fc_dim=cfg.MODEL.fc_dim,
+        weights=cfg.MODEL.weights_enc_memory,
+        num_class=cfg.TASK.n_ways+1,
+        RGB_mask_combine_val=cfg.DATASET.RGB_mask_combine_val,
+        segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate)    
+    net_att_query = ModelBuilder.build_attention(
         arch=cfg.MODEL.arch_attention,
+        input_dim=cfg.MODEL.encoder_dim,
         fc_dim=cfg.MODEL.fc_dim,
         weights=cfg.MODEL.weights_att_query)
-    net_att_memory = ModelBuilder.build_att_memory(
+    net_att_memory = ModelBuilder.build_attention(
         arch=cfg.MODEL.arch_attention,
+        input_dim=cfg.MODEL.encoder_dim,
         fc_dim=cfg.MODEL.fc_dim,
-        att_fc_dim=cfg.MODEL.att_fc_dim,
         weights=cfg.MODEL.weights_att_memory)
     net_decoder = ModelBuilder.build_decoder(
         arch=cfg.MODEL.arch_decoder.lower(),
+        input_dim=cfg.MODEL.decoder_dim,
         fc_dim=cfg.MODEL.fc_dim,
         num_class=cfg.TASK.n_ways+1,
         weights=cfg.MODEL.weights_decoder,
@@ -121,7 +106,7 @@ def main(cfg, gpus):
 
     crit = nn.NLLLoss(ignore_index=255)
 
-    segmentation_module = SegmentationAttentionSeparateModule(net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, zero_qval=cfg.MODEL.zero_qval, qval_qread_BN=cfg.MODEL.qval_qread_BN, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, debug=cfg.is_debug or cfg.eval_att_voting, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate, att_voting=cfg.MODEL.att_voting, mask_foreground=cfg.MODEL.mask_foreground)
+    segmentation_module = SegmentationAttentionSeparateModule(net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, zero_qval=cfg.MODEL.zero_qval, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, debug=cfg.is_debug or cfg.eval_att_voting, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate, segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate, mask_foreground=cfg.MODEL.mask_foreground)
 
     segmentation_module = nn.DataParallel(segmentation_module, device_ids=gpus)
     segmentation_module.cuda()

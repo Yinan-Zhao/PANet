@@ -101,11 +101,21 @@ class ResNet_Deeplab(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
+        print('conv1 shape')
+        print(x.shape)
         x = self.maxpool(x)
+        print('pool shape')
+        print(x.shape)
         x = self.layer1(x)
+        print('layer1 shape')
+        print(x.shape)
         x = self.layer2(x)
+        print('layer2 shape')
+        print(x.shape)
         feat_layer2 = x
         feat_layer3 = self.layer3(x)
+        print('layer3 shape')
+        print(feat_layer3.shape)
         x=torch.cat([feat_layer2,feat_layer3],dim=1)
         if return_feature_maps:
             return [x]

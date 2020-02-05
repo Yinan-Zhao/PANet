@@ -217,6 +217,7 @@ def main(cfg, gpus):
     else:
         raise ValueError('Wrong config for dataset!')
     labels = CLASS_LABELS[data_name][cfg.TASK.fold_idx]
+    labels_val = CLASS_LABELS[data_name]['all'] - CLASS_LABELS[data_name][cfg.TASK.fold_idx]
     transforms = Compose([Resize(size=cfg.DATASET.input_size),
                           RandomMirror()])
     dataset = make_data(
@@ -324,7 +325,7 @@ def main(cfg, gpus):
                         split=cfg.DATASET.data_split,
                         transforms=transforms,
                         to_tensor=ToTensorNormalize(),
-                        labels=labels,
+                        labels=labels_val,
                         max_iters=cfg.VAL.n_iters * cfg.VAL.n_batch,
                         n_ways=cfg.TASK.n_ways,
                         n_shots=cfg.TASK.n_shots,
@@ -350,10 +351,10 @@ def main(cfg, gpus):
                                       np.array(feed_dict['seg_label'][0].cpu()),
                                       labels=label_ids, n_run=run)
 
-                    classIoU, meanIoU = metric.get_mIoU(labels=sorted(labels), n_run=run)
+                    classIoU, meanIoU = metric.get_mIoU(labels=sorted(labels_val), n_run=run)
                     classIoU_binary, meanIoU_binary = metric.get_mIoU_binary(n_run=run)
 
-            classIoU, classIoU_std, meanIoU, meanIoU_std = metric.get_mIoU(labels=sorted(labels))
+            classIoU, classIoU_std, meanIoU, meanIoU_std = metric.get_mIoU(labels=sorted(labels_val))
             classIoU_binary, classIoU_std_binary, meanIoU_binary, meanIoU_std_binary = metric.get_mIoU_binary()
 
             print('----- Evaluation Result -----')

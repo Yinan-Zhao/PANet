@@ -20,6 +20,7 @@ import pdb
 
 #from dataloaders.customized import voc_fewshot, coco_fewshot
 from dataloaders.transforms import RandomMirror, Resize, ToTensorNormalize
+from util.metric import Metric
 from util.utils import set_seed, CLASS_LABELS
 from utils_seg import AverageMeter, parse_devices, setup_logger
 from models import ModelBuilder, SegmentationAttentionSeparateModule

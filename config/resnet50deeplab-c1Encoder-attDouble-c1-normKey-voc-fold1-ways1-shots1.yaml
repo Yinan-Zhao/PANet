@@ -41,7 +41,7 @@ TRAIN:
   disp_iter: 100
   seed: 304
   save_freq: 1000
-  eval_freq: 500
+  eval_freq: 100
   permute_labels: False
 
 VAL:

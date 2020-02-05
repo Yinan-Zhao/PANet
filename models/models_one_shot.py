@@ -291,6 +291,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 mask_feature_memory = self.memoryEncode(self.encoder_memory, feed_dict['img_refs_mask'], return_feature_maps=True)
                 
                 _, mval = self.memoryAttention(self.attention_memory, mask_feature_memory)
+                print('key shape')
+                print(mkey.shape)
+                print('value shape')
+                print(mval.shape)
 
                 if self.att_mat_downsample_rate != 1:
                     output_shape = (qval.shape[0], qval.shape[1], qval.shape[2]//self.att_mat_downsample_rate, qval.shape[3]//self.att_mat_downsample_rate)

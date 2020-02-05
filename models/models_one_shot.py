@@ -102,21 +102,11 @@ class ResNet_Deeplab(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        print('conv1 shape')
-        print(x.shape)
         x = self.maxpool(x)
-        print('pool shape')
-        print(x.shape)
         x = self.layer1(x)
-        print('layer1 shape')
-        print(x.shape)
         x = self.layer2(x)
-        print('layer2 shape')
-        print(x.shape)
         feat_layer2 = x
         feat_layer3 = self.layer3(x)
-        print('layer3 shape')
-        print(feat_layer3.shape)
         x=torch.cat([feat_layer2,feat_layer3],dim=1)
         if return_feature_maps:
             return [x]
@@ -302,10 +292,6 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 mask_feature_memory = self.memoryEncode(self.encoder_memory, feed_dict['img_refs_mask'], return_feature_maps=True)
                 
                 _, mval = self.memoryAttention(self.attention_memory, mask_feature_memory)
-                print('key shape')
-                print(mkey.shape)
-                print('value shape')
-                print(mval.shape)
 
                 if self.att_mat_downsample_rate != 1:
                     output_shape = (qval.shape[0], qval.shape[1], qval.shape[2]//self.att_mat_downsample_rate, qval.shape[3]//self.att_mat_downsample_rate)
@@ -883,11 +869,7 @@ class C1_Encoder_Memory(nn.Module):
         x_downsample = nn.functional.interpolate(x, 
             size=(x.shape[-2]//self.segm_downsampling_rate, x.shape[-1]//self.segm_downsampling_rate), 
             mode='nearest')
-        print('downsample shape')
-        print(x_downsample.shape)
         x = self.cbr(x_downsample)
-        print('x conv shape')
-        print(x.shape)
         if return_feature_maps:
             return [x]
         else:
@@ -1077,11 +1059,6 @@ class AttModule_Double(nn.Module):
         conv5 = conv_out[-1]
         key = self.key_conv(conv5)
         value = self.value_conv(conv5)
-
-        print('conv5 shape')
-        print(conv5.shape)
-        print('key in shape')
-        print(key.shape)
 
         return key, value
 

@@ -2,7 +2,7 @@ DATASET:
   name: "VOC"
   data_dir: "./data/pascal/VOCdevkit/VOC2012/"
   data_split: "trainaug"
-  input_size: (321, 321)
+  input_size: (328, 328)
   padding_constant: 8
   segm_downsampling_rate: 8
 

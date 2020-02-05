@@ -1033,7 +1033,7 @@ class AttModule(nn.Module):
 
         self.key_conv = nn.Conv2d(input_dim, fc_dim//8, kernel_size=1,
                       stride=1, padding=0, bias=False)
-        self.value_conv = nn.Conv2d(fc_dim, fc_dim//2, kernel_size=1,
+        self.value_conv = nn.Conv2d(input_dim, fc_dim//2, kernel_size=1,
                       stride=1, padding=0, bias=False)
         self.out_dim = fc_dim//2
 
@@ -1050,7 +1050,7 @@ class AttModule_Double(nn.Module):
 
         self.key_conv = nn.Conv2d(input_dim, fc_dim//4, kernel_size=1,
                       stride=1, padding=0, bias=False)
-        self.value_conv = nn.Conv2d(fc_dim, fc_dim, kernel_size=1,
+        self.value_conv = nn.Conv2d(input_dim, fc_dim, kernel_size=1,
                       stride=1, padding=0, bias=False)
         self.out_dim = fc_dim
 

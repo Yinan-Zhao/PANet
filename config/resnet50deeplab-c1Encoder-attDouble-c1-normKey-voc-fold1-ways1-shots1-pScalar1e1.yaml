@@ -38,10 +38,10 @@ TRAIN:
   deep_sup_scale: 0.4
   fix_bn: False
   workers: 4
-  disp_iter: 100
+  disp_iter: 200
   seed: 304
   save_freq: 200000
-  eval_freq: 100
+  eval_freq: 10000
   permute_labels: False
 
 VAL:
@@ -53,4 +53,4 @@ TEST:
   checkpoint: "epoch_25.pth"
   result: "./"
 
-DIR: "ckpt/resnet50deeplab-c1Encoder-attDouble-c1-normKey-voc-fold1-ways1-shots1"
+DIR: "ckpt/resnet50deeplab-c1Encoder-attDouble-c1-normKey-voc-fold1-ways1-shots1-pScalar1e1"

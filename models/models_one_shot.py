@@ -872,7 +872,11 @@ class C1_Encoder_Memory(nn.Module):
         x_downsample = nn.functional.interpolate(x, 
             size=(x.shape[-2]//self.segm_downsampling_rate, x.shape[-1]//self.segm_downsampling_rate), 
             mode='nearest')
+        print('downsample shape')
+        print(x_downsample.shape)
         x = self.cbr(x_downsample)
+        print('x conv shape')
+        print(x.shape)
         if return_feature_maps:
             return [x]
         else:

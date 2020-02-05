@@ -6,7 +6,7 @@ import random
 import argparse
 
 from config import cfg
-
+import tqdm
 import torch
 import torch.nn as nn
 import torch.optim

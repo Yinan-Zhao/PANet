@@ -87,12 +87,9 @@ _C.TRAIN = CN()
 _C.TRAIN.n_iters = 600000
 _C.TRAIN.n_batch = 8
 
-
-_C.TRAIN.batch_size_per_gpu = 2
 # epoch to start training. useful if continue from a checkpoint
 _C.TRAIN.start_iter = 0
 # iterations of each epoch (irrelevant to batch size)
-_C.TRAIN.epoch_iters = 5000
 
 _C.TRAIN.optim = "SGD"
 _C.TRAIN.lr_encoder = 0.02
@@ -111,10 +108,11 @@ _C.TRAIN.fix_bn = False
 _C.TRAIN.workers = 16
 
 # frequency to display
-_C.TRAIN.disp_iter = 20
+_C.TRAIN.disp_iter = 100
 # manual seed
 _C.TRAIN.seed = 304
-_C.TRAIN.save_freq = 10000
+_C.TRAIN.save_freq = 200000
+_C.TRAIN.eval_freq = 5000
 _C.TRAIN.permute_labels = False
 _C.TRAIN.fix_encoder = True
 

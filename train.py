@@ -23,17 +23,18 @@ from dataloaders.transforms import RandomMirror, Resize, ToTensorNormalize
 from util.utils import set_seed, CLASS_LABELS
 from utils_seg import AverageMeter, parse_devices, setup_logger
 from models import ModelBuilder, SegmentationAttentionSeparateModule
-#from lib.nn import UserScatteredDataParallel, user_scattered_collate, patch_replication_callback
 
-
-def data_preprocess(sample_batched, cfg):
+def data_preprocess(sample_batched, cfg, is_val=False):
     feed_dict = {}
     feed_dict['img_data'] = sample_batched['query_images'][0].cuda()
-    tmp = sample_batched['query_labels'][0]
-    tmp = torch.unsqueeze(tmp, 1).float()
-    tmp = nn.functional.interpolate(tmp, size=(cfg.DATASET.input_size[0]//cfg.DATASET.segm_downsampling_rate,
-        cfg.DATASET.input_size[1]//cfg.DATASET.segm_downsampling_rate), mode='nearest')
-    feed_dict['seg_label'] = tmp[:,0,:,:].long().cuda() 
+    if is_val:
+        feed_dict['seg_label'] = sample_batched['query_labels'][0].cuda()
+    else:
+        tmp = sample_batched['query_labels'][0]
+        tmp = torch.unsqueeze(tmp, 1).float()
+        tmp = nn.functional.interpolate(tmp, size=(cfg.DATASET.input_size[0]//cfg.DATASET.segm_downsampling_rate,
+            cfg.DATASET.input_size[1]//cfg.DATASET.segm_downsampling_rate), mode='nearest')
+        feed_dict['seg_label'] = tmp[:,0,:,:].long().cuda() 
 
     n_ways = cfg.TASK.n_ways
     n_shots = cfg.TASK.n_shots
@@ -256,6 +257,7 @@ def main(cfg, gpus):
 
     segmentation_module.train(not cfg.TRAIN.fix_bn)
 
+    best_iou = 0
     # main loop
     tic = time.time()
 
@@ -306,6 +308,65 @@ def main(cfg, gpus):
 
         if (i_iter+1) % cfg.TRAIN.save_freq == 0:
             checkpoint(nets, history, cfg, i_iter+1)
+
+        if (i_iter+1) % cfg.TRAIN.eval_freq == 0:
+            with torch.no_grad():
+                print ('----Evaluation----')
+                segmentation_module.eval()
+                net_decoder.use_softmax = True
+                for run in range(cfg.VAL.n_runs):
+                    print(f'### Run {run + 1} ###')
+                    set_seed(cfg.VAL.seed + run)
+
+                    print(f'### Load validation data ###')
+                    dataset_val = make_data(
+                        base_dir=cfg.DATASET.data_dir,
+                        split=cfg.DATASET.data_split,
+                        transforms=transforms,
+                        to_tensor=ToTensorNormalize(),
+                        labels=labels,
+                        max_iters=cfg.VAL.n_iters * cfg.VAL.n_batch,
+                        n_ways=cfg.TASK.n_ways,
+                        n_shots=cfg.TASK.n_shots,
+                        n_queries=cfg.TASK.n_queries,
+                        permute=cfg.VAL.permute_labels
+                    )
+                    if data_name == 'COCO':
+                        coco_cls_ids = dataset_val.datasets[0].dataset.coco.getCatIds()
+                    testloader = DataLoader(dataset_val, batch_size=cfg.VAL.n_batch, shuffle=False,
+                                            num_workers=1, pin_memory=True, drop_last=False)
+                    print(f"Total # of validation Data: {len(dataset)}")
+
+                    for sample_batched in tqdm.tqdm(testloader):
+                        feed_dict = data_preprocess(sample_batched, cfg, is_val=True)
+                        if data_name == 'COCO':
+                            label_ids = [coco_cls_ids.index(x) + 1 for x in sample_batched['class_ids']]
+                        else:
+                            label_ids = list(sample_batched['class_ids'])
+
+                        query_pred = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
+                        metric.record(np.array(query_pred.argmax(dim=1)[0].cpu()),
+                                      np.array(feed_dict['seg_label'][0].cpu()),
+                                      labels=label_ids, n_run=run)
+
+                    classIoU, meanIoU = metric.get_mIoU(labels=sorted(labels), n_run=run)
+                    classIoU_binary, meanIoU_binary = metric.get_mIoU_binary(n_run=run)
+
+            classIoU, classIoU_std, meanIoU, meanIoU_std = metric.get_mIoU(labels=sorted(labels))
+            classIoU_binary, classIoU_std_binary, meanIoU_binary, meanIoU_std_binary = metric.get_mIoU_binary()
+
+            print('----- Evaluation Result -----')
+            print(f'meanIoU mean: {meanIoU}')
+            print(f'meanIoU std: {meanIoU_std}')
+            print(f'meanIoU_binary mean: {meanIoU_binary}')
+            print(f'meanIoU_binary std: {meanIoU_std_binary}')
+
+            if meanIoU > best_iou:
+                best_iou = meanIoU
+                checkpoint(nets, history, cfg, 'best')
+            segmentation_module.train(not cfg.TRAIN.fix_bn)
+            net_decoder.use_softmax = False
+
 
     print('Training Done!')
 
@@ -377,8 +438,6 @@ if __name__ == '__main__':
     gpus = parse_devices(args.gpus)
     gpus = [x.replace('gpu', '') for x in gpus]
     gpus = [int(x) for x in gpus]
-    #print('gpus')
-    #print(gpus)
     num_gpus = len(gpus)
 
     cfg.TRAIN.max_iters = cfg.TRAIN.n_iters

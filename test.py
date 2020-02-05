@@ -93,7 +93,7 @@ def main(cfg, gpus):
         weights=cfg.MODEL.weights_att_query)
     net_att_memory = ModelBuilder.build_attention(
         arch=cfg.MODEL.arch_attention,
-        input_dim=cfg.MODEL.encoder_dim,
+        input_dim=cfg.MODEL.fc_dim,
         fc_dim=cfg.MODEL.fc_dim,
         weights=cfg.MODEL.weights_att_memory)
     net_decoder = ModelBuilder.build_decoder(

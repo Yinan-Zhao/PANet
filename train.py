@@ -337,7 +337,9 @@ def main(cfg, gpus):
                                             num_workers=1, pin_memory=True, drop_last=False)
                     print(f"Total # of validation Data: {len(dataset)}")
 
-                    for sample_batched in tqdm.tqdm(testloader):
+                    #for sample_batched in tqdm.tqdm(testloader):
+                    for sample_batched in testloader:
+                        print('haha')
                         feed_dict = data_preprocess(sample_batched, cfg, is_val=True)
                         if data_name == 'COCO':
                             label_ids = [coco_cls_ids.index(x) + 1 for x in sample_batched['class_ids']]

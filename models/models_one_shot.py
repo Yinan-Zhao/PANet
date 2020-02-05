@@ -1001,7 +1001,7 @@ class C1DeepSup(nn.Module):
 
 # last conv
 class C1(nn.Module):
-    def __init__(self, num_class=150, input_dim, fc_dim=2048, use_softmax=False):
+    def __init__(self, num_class=150, input_dim=1024, fc_dim=2048, use_softmax=False):
         super(C1, self).__init__()
         self.use_softmax = use_softmax
 

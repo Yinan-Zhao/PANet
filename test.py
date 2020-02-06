@@ -80,7 +80,7 @@ def main(cfg, gpus):
         weights=cfg.MODEL.weights_enc_query,
         fix_encoder=cfg.TRAIN.fix_encoder)
     net_enc_memory = ModelBuilder.build_encoder_memory_separate(
-        arch=cfg.MODEL.memory_encoder_arch.lower(),
+        arch=cfg.MODEL.arch_memory_encoder.lower(),
         fc_dim=cfg.MODEL.fc_dim,
         weights=cfg.MODEL.weights_enc_memory,
         num_class=cfg.TASK.n_ways+1,

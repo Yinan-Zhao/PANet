@@ -129,7 +129,6 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
 
 
     ###### Generate query label (class indices in one episode, i.e. the ground truth)######
-    query_labels_haha = [torch.zeros_like(x) for x in query_labels]
     query_labels_tmp = [torch.tensor(perm_mapping[0]).long()+torch.zeros_like(x) for x in query_labels]
     for i, query_label_tmp in enumerate(query_labels_tmp):
         query_label_tmp[query_labels[i] == 255] = 255

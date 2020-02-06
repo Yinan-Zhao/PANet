@@ -354,12 +354,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     h,w = mval_rgb.shape[-2], mval_rgb.shape[-1]
 
                     area = F.avg_pool2d(support_mask, mval_rgb.shape[-2:]) * h * w + 0.0005
-                    print(area)
                     z = support_mask * mval_rgb[:,:,0,:,:]
                     z = F.avg_pool2d(input=z,
                                      kernel_size=mval_rgb.shape[-2:]) * h * w / area
-                    print(z.shape)
-                    #z = z.expand(-1, -1, feature_size[0], feature_size[1])  # tile for cat
+                    qread = z.expand(-1, -1, mval_rgb.shape[-2], mval_rgb.shape[-1])  # tile for cat
 
                 if self.zero_qval:
                     qval = torch.zeros_like(qval)
@@ -448,6 +446,17 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     size=(qread.shape[2]*self.att_mat_downsample_rate, 
                         qread.shape[3]*self.att_mat_downsample_rate), 
                     mode='bilinear')
+
+            if self.global_pool_read:
+                support_mask = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=self.segm_downsampling_rate, mode='nearest')
+                support_mask = support_mask[:,:,0,:,:]
+                h,w = mval_rgb.shape[-2], mval_rgb.shape[-1]
+
+                area = F.avg_pool2d(support_mask, mval_rgb.shape[-2:]) * h * w + 0.0005
+                z = support_mask * mval_rgb[:,:,0,:,:]
+                z = F.avg_pool2d(input=z,
+                                 kernel_size=mval_rgb.shape[-2:]) * h * w / area
+                qread = z.expand(-1, -1, mval_rgb.shape[-2], mval_rgb.shape[-1])  # tile for cat
 
             if self.zero_qval:
                 qval = torch.zeros_like(qval)

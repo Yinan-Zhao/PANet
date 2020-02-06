@@ -199,6 +199,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.att_mat_downsample_rate = att_mat_downsample_rate
         self.segm_downsampling_rate = segm_downsampling_rate
         self.mask_foreground = mask_foreground
+        self.global_pool_read = global_pool_read
 
         self.debug = debug
 

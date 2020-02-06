@@ -79,6 +79,7 @@ _C.MODEL.p_scalar = 10.0
 _C.MODEL.memory_feature_aggregation = False
 _C.MODEL.memory_noLabel = False
 _C.MODEL.mask_foreground = False
+_C.MODEL.global_pool_read = False
 
 # -----------------------------------------------------------------------------
 # Training

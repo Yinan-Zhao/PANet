@@ -177,7 +177,7 @@ class SegmentationModule(SegmentationModuleBase):
             return pred
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, segm_downsampling_rate=8., mask_foreground=False, debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -346,6 +346,19 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                         size=(qread.shape[2]*self.att_mat_downsample_rate, 
                             qread.shape[3]*self.att_mat_downsample_rate), 
                         mode='bilinear')
+
+                if self.global_pool_read:
+                    support_mask = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=self.segm_downsampling_rate, mode='nearest')
+                    support_mask = support_mask[:,:,0,:,:]
+                    h,w = mval_rgb.shape[-2], mval_rgb.shape[-1]
+
+                    area = F.avg_pool2d(support_mask, mval_rgb.shape[-2:]) * h * w + 0.0005
+                    print(area)
+                    z = support_mask * mval_rgb[:,:,0,:,:]
+                    z = F.avg_pool2d(input=z,
+                                     kernel_size=mval_rgb.shape[-2:]) * h * w / area
+                    print(z.shape)
+                    #z = z.expand(-1, -1, feature_size[0], feature_size[1])  # tile for cat
 
                 if self.zero_qval:
                     qval = torch.zeros_like(qval)

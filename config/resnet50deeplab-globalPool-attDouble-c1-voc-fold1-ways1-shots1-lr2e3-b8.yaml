@@ -1,0 +1,57 @@
+DATASET:
+  name: "VOC"
+  data_dir: "./data/pascal/VOCdevkit/VOC2012/"
+  data_split: "trainaug"
+  input_size: (328, 328)
+  padding_constant: 8
+  segm_downsampling_rate: 8
+
+TASK:
+  n_ways: 1
+  n_shots: 1
+  n_queries: 1
+  fold_idx: 1
+
+MODEL:
+  arch_encoder: "resnet50_deeplab"
+  arch_memory_encoder: "c1"
+  arch_attention: "attention_double"
+  arch_decoder: "c1"
+  mask_feat_downsample_rate: 1
+  att_mat_downsample_rate: 1
+  fc_dim: 512
+  encoder_dim: 1536
+  decoder_dim: 1024
+  normalize_key: False
+  p_scalar: 1.0
+  global_pool_read: True
+
+TRAIN:
+  n_iters: 600000
+  start_iter: 0
+  n_batch: 8
+  optim: "SGD"
+  lr_encoder: 0.0025
+  lr_decoder: 0.0025
+  lr_pow: 0.9
+  beta1: 0.9
+  weight_decay: 1e-4
+  deep_sup_scale: 0.4
+  fix_bn: False
+  workers: 4
+  disp_iter: 200
+  seed: 304
+  save_freq: 200000
+  eval_freq: 10000
+  permute_labels: False
+
+VAL:
+  n_runs: 3
+  visualize: False
+  checkpoint: "iter_10000.pth"
+
+TEST:
+  checkpoint: "epoch_25.pth"
+  result: "./"
+
+DIR: "ckpt/resnet50deeplab-globalPool-attDouble-c1-voc-fold1-ways1-shots1-lr2e3-b8"

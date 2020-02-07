@@ -570,7 +570,8 @@ class ModelBuilder:
     @staticmethod
     def build_decoder(arch='ppm_deepsup', input_dim=512,
                       fc_dim=512, num_class=150,
-                      weights='', use_softmax=False):
+                      weights='', use_dropout=False,
+                      use_softmax=False):
         arch = arch.lower()
         if arch == 'c1_deepsup':
             net_decoder = C1DeepSup(
@@ -582,6 +583,7 @@ class ModelBuilder:
                 num_class=num_class,
                 input_dim=input_dim,
                 fc_dim=fc_dim,
+                use_dropout=use_dropout,
                 use_softmax=use_softmax)
         elif arch == 'ppm':
             net_decoder = PPM(
@@ -1028,11 +1030,13 @@ class C1DeepSup(nn.Module):
 
 # last conv
 class C1(nn.Module):
-    def __init__(self, num_class=150, input_dim=1024, fc_dim=2048, use_softmax=False):
+    def __init__(self, num_class=150, input_dim=1024, fc_dim=2048, use_dropout=False, use_softmax=False):
         super(C1, self).__init__()
         self.use_softmax = use_softmax
+        self.use_dropout = use_dropout
 
         self.cbr = conv3x3_bn_relu(input_dim, fc_dim // 2, 1)
+        self.dropout = nn.Dropout2d(p=0.5)
 
         # last conv
         self.conv_last = nn.Conv2d(fc_dim // 2, num_class, 1, 1, 0)
@@ -1040,6 +1044,8 @@ class C1(nn.Module):
     def forward(self, conv_out, segSize=None):
         conv5 = conv_out[-1]
         x = self.cbr(conv5)
+        if self.use_dropout:
+            x = self.dropout(x)
         x = self.conv_last(x)
 
         if self.use_softmax: # is True during inference

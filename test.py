@@ -102,6 +102,7 @@ def main(cfg, gpus):
         fc_dim=cfg.MODEL.fc_dim,
         num_class=cfg.TASK.n_ways+1,
         weights=cfg.MODEL.weights_decoder,
+        use_dropout=cfg.MODEL.use_dropout,
         use_softmax=True)
 
     crit = nn.NLLLoss(ignore_index=255)

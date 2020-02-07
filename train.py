@@ -192,7 +192,8 @@ def main(cfg, gpus):
         input_dim=cfg.MODEL.decoder_dim,
         fc_dim=cfg.MODEL.fc_dim,
         num_class=cfg.TASK.n_ways+1,
-        weights=cfg.MODEL.weights_decoder)
+        weights=cfg.MODEL.weights_decoder,
+        use_dropout=cfg.MODEL.use_dropout)
 
     crit = nn.NLLLoss(ignore_index=255)
 
@@ -358,6 +359,7 @@ def main(cfg, gpus):
             classIoU_binary, classIoU_std_binary, meanIoU_binary, meanIoU_std_binary = metric.get_mIoU_binary()
 
             print('----- Evaluation Result -----')
+            print(f'best meanIoU mean: {best_iou}')
             print(f'meanIoU mean: {meanIoU}')
             print(f'meanIoU std: {meanIoU_std}')
             print(f'meanIoU_binary mean: {meanIoU_binary}')

@@ -80,6 +80,7 @@ _C.MODEL.memory_feature_aggregation = False
 _C.MODEL.memory_noLabel = False
 _C.MODEL.mask_foreground = False
 _C.MODEL.global_pool_read = False
+_C.MODEL.use_dropout = False
 
 # -----------------------------------------------------------------------------
 # Training

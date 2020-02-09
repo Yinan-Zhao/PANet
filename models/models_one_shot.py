@@ -594,8 +594,8 @@ class ModelBuilder:
         elif arch == 'ppm_few_shot':
             net_decoder = PPM_Few_Shot(
                 num_class=num_class,
-                fc_dim=fc_dim,
-                ppm_dim=ppm_dim,
+                input_dim=input_dim,
+                fc_dim=ppm_dim,
                 dropout_rate=dropout_rate,
                 use_dropout=use_dropout,
                 use_softmax=use_softmax)

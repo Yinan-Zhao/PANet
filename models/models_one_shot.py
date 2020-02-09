@@ -1159,7 +1159,7 @@ class PPM_Few_Shot(nn.Module):
             self.ppm.append(nn.Sequential(
                 nn.AdaptiveAvgPool2d(scale),
                 nn.Conv2d(fc_dim, fc_dim, kernel_size=1, bias=False),
-                BatchNorm2d(fc_dim),
+                nn.BatchNorm2d(fc_dim),
                 nn.ReLU(inplace=True)
             ))
         self.ppm = nn.ModuleList(self.ppm)
@@ -1172,7 +1172,7 @@ class PPM_Few_Shot(nn.Module):
             self.conv_last = nn.Sequential(
                 nn.Conv2d(fc_dim+len(pool_scales)*fc_dim, fc_dim,
                           kernel_size=3, padding=1, bias=False),
-                BatchNorm2d(fc_dim),
+                nn.BatchNorm2d(fc_dim),
                 nn.ReLU(inplace=True),
                 nn.Dropout2d(dropout_rate),
                 nn.Conv2d(fc_dim, num_class, kernel_size=1)
@@ -1184,7 +1184,7 @@ class PPM_Few_Shot(nn.Module):
             self.conv_last = nn.Sequential(
                 nn.Conv2d(fc_dim+len(pool_scales)*fc_dim, fc_dim,
                           kernel_size=3, padding=1, bias=False),
-                BatchNorm2d(fc_dim),
+                nn.BatchNorm2d(fc_dim),
                 nn.ReLU(inplace=True),
                 nn.Conv2d(fc_dim, num_class, kernel_size=1)
             )

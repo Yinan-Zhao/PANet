@@ -100,8 +100,10 @@ def main(cfg, gpus):
         arch=cfg.MODEL.arch_decoder.lower(),
         input_dim=cfg.MODEL.decoder_dim,
         fc_dim=cfg.MODEL.fc_dim,
+        ppm_dim=cfg.MODEL.ppm_dim,
         num_class=cfg.TASK.n_ways+1,
         weights=cfg.MODEL.weights_decoder,
+        dropout_rate=cfg.MODEL.dropout_rate,
         use_dropout=cfg.MODEL.use_dropout,
         use_softmax=True)
 

@@ -569,8 +569,8 @@ class ModelBuilder:
 
     @staticmethod
     def build_decoder(arch='ppm_deepsup', input_dim=512,
-                      fc_dim=512, num_class=150,
-                      weights='', use_dropout=False,
+                      fc_dim=512, ppm_dim=256, num_class=150,
+                      weights='', dropout_rate=0.5, use_dropout=False,
                       use_softmax=False):
         arch = arch.lower()
         if arch == 'c1_deepsup':
@@ -583,6 +583,7 @@ class ModelBuilder:
                 num_class=num_class,
                 input_dim=input_dim,
                 fc_dim=fc_dim,
+                dropout_rate=dropout_rate,
                 use_dropout=use_dropout,
                 use_softmax=use_softmax)
         elif arch == 'ppm':
@@ -590,10 +591,13 @@ class ModelBuilder:
                 num_class=num_class,
                 fc_dim=fc_dim,
                 use_softmax=use_softmax)
-        elif arch == 'ppm_memory_double':
-            net_decoder = PPM_Memory_Double(
+        elif arch == 'ppm_few_shot':
+            net_decoder = PPM_Few_Shot(
                 num_class=num_class,
                 fc_dim=fc_dim,
+                ppm_dim=ppm_dim,
+                dropout_rate=dropout_rate,
+                use_dropout=use_dropout,
                 use_softmax=use_softmax)
         elif arch == 'ppm_deepsup':
             net_decoder = PPMDeepsup(
@@ -1030,13 +1034,13 @@ class C1DeepSup(nn.Module):
 
 # last conv
 class C1(nn.Module):
-    def __init__(self, num_class=150, input_dim=1024, fc_dim=2048, use_dropout=False, use_softmax=False):
+    def __init__(self, num_class=150, input_dim=1024, fc_dim=2048, dropout_rate=0.5, use_dropout=False, use_softmax=False):
         super(C1, self).__init__()
         self.use_softmax = use_softmax
         self.use_dropout = use_dropout
 
         self.cbr = conv3x3_bn_relu(input_dim, fc_dim // 2, 1)
-        self.dropout = nn.Dropout2d(p=0.5)
+        self.dropout = nn.Dropout2d(p=dropout_rate)
 
         # last conv
         self.conv_last = nn.Conv2d(fc_dim // 2, num_class, 1, 1, 0)
@@ -1141,41 +1145,59 @@ class PPM(nn.Module):
         return x
 
 # pyramid pooling
-class PPM_Memory_Double(nn.Module):
-    def __init__(self, num_class=150, fc_dim=4096,
-                 use_softmax=False, pool_scales=(1, 2, 3, 6)):
-        super(PPM_Memory_Double, self).__init__()
+class PPM_Few_Shot(nn.Module):
+    def __init__(self, num_class=150, input_dim=1024, fc_dim=256, dropout_rate=0.5,
+                 use_dropout=False, use_softmax=False, pool_scales=(1, 2, 3, 6)):
+        super(PPM_Few_Shot, self).__init__()
         self.use_softmax = use_softmax
-
+        self.use_dropout = use_dropout
         self.fc_dim = fc_dim
 
         self.ppm = []
+
         for scale in pool_scales:
             self.ppm.append(nn.Sequential(
                 nn.AdaptiveAvgPool2d(scale),
-                nn.Conv2d(fc_dim, 512, kernel_size=1, bias=False),
-                BatchNorm2d(512),
+                nn.Conv2d(fc_dim, fc_dim, kernel_size=1, bias=False),
+                BatchNorm2d(fc_dim),
                 nn.ReLU(inplace=True)
             ))
         self.ppm = nn.ModuleList(self.ppm)
 
-        self.conv_last = nn.Sequential(
-            nn.Conv2d(2*fc_dim+len(pool_scales)*512, 512,
-                      kernel_size=3, padding=1, bias=False),
-            BatchNorm2d(512),
-            nn.ReLU(inplace=True),
-            nn.Dropout2d(0.1),
-            nn.Conv2d(512, num_class, kernel_size=1)
-        )
+        if self.use_dropout:
+            self.conv1 = nn.Sequential(
+                conv3x3_bn_relu(input_dim, fc_dim, 1),
+                nn.Dropout2d(dropout_rate)
+            )
+            self.conv_last = nn.Sequential(
+                nn.Conv2d(fc_dim+len(pool_scales)*fc_dim, fc_dim,
+                          kernel_size=3, padding=1, bias=False),
+                BatchNorm2d(fc_dim),
+                nn.ReLU(inplace=True),
+                nn.Dropout2d(dropout_rate),
+                nn.Conv2d(fc_dim, num_class, kernel_size=1)
+            )
+        else:
+            self.conv1 = nn.Sequential(
+                conv3x3_bn_relu(input_dim, fc_dim, 1)
+            )
+            self.conv_last = nn.Sequential(
+                nn.Conv2d(fc_dim+len(pool_scales)*fc_dim, fc_dim,
+                          kernel_size=3, padding=1, bias=False),
+                BatchNorm2d(fc_dim),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(fc_dim, num_class, kernel_size=1)
+            )
 
     def forward(self, conv_out, segSize=None):
         conv5 = conv_out[-1]
 
         input_size = conv5.size()
-        ppm_out = [conv5]
+        x = self.conv1(conv5)
+        ppm_out = [x]
         for pool_scale in self.ppm:
             ppm_out.append(nn.functional.interpolate(
-                pool_scale(conv5[:,:self.fc_dim]),
+                pool_scale(x[:,:self.fc_dim]),
                 (input_size[2], input_size[3]),
                 mode='bilinear', align_corners=False))
         ppm_out = torch.cat(ppm_out, 1)

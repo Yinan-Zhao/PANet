@@ -66,6 +66,7 @@ _C.MODEL.weights_att_memory = ""
 _C.MODEL.encoder_dim = 1536
 _C.MODEL.fc_dim = 512
 _C.MODEL.decoder_dim = 1024
+_C.MODEL.ppm_dim = 256
 _C.MODEL.mask_feat_downsample_rate = 1
 _C.MODEL.att_mat_downsample_rate = 1
 _C.MODEL.zero_memory = False
@@ -81,6 +82,7 @@ _C.MODEL.memory_noLabel = False
 _C.MODEL.mask_foreground = False
 _C.MODEL.global_pool_read = False
 _C.MODEL.use_dropout = False
+_C.MODEL.droput_rate = 0.5
 
 # -----------------------------------------------------------------------------
 # Training

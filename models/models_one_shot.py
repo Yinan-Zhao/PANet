@@ -599,6 +599,14 @@ class ModelBuilder:
                 dropout_rate=dropout_rate,
                 use_dropout=use_dropout,
                 use_softmax=use_softmax)
+        elif arch == 'ppm_few_shot_dropout':
+            net_decoder = PPM_Few_Shot_Dropout(
+                num_class=num_class,
+                input_dim=input_dim,
+                fc_dim=ppm_dim,
+                dropout_rate=dropout_rate,
+                use_dropout=use_dropout,
+                use_softmax=use_softmax)
         elif arch == 'aspp_few_shot':
             net_decoder = ASPP_Few_Shot(
                 num_class=num_class,
@@ -1169,6 +1177,74 @@ class PPM_Few_Shot(nn.Module):
                 nn.Conv2d(fc_dim, fc_dim, kernel_size=1, bias=False),
                 nn.BatchNorm2d(fc_dim),
                 nn.ReLU(inplace=True)
+            ))
+        self.ppm = nn.ModuleList(self.ppm)
+
+        if self.use_dropout:
+            self.conv1 = nn.Sequential(
+                conv3x3_bn_relu(input_dim, fc_dim, 1),
+                nn.Dropout2d(dropout_rate)
+            )
+            self.conv_last = nn.Sequential(
+                nn.Conv2d(fc_dim+len(pool_scales)*fc_dim, fc_dim,
+                          kernel_size=3, padding=1, bias=False),
+                nn.BatchNorm2d(fc_dim),
+                nn.ReLU(inplace=True),
+                nn.Dropout2d(dropout_rate),
+                nn.Conv2d(fc_dim, num_class, kernel_size=1)
+            )
+        else:
+            self.conv1 = nn.Sequential(
+                conv3x3_bn_relu(input_dim, fc_dim, 1)
+            )
+            self.conv_last = nn.Sequential(
+                nn.Conv2d(fc_dim+len(pool_scales)*fc_dim, fc_dim,
+                          kernel_size=3, padding=1, bias=False),
+                nn.BatchNorm2d(fc_dim),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(fc_dim, num_class, kernel_size=1)
+            )
+
+    def forward(self, conv_out, segSize=None):
+        conv5 = conv_out[-1]
+
+        input_size = conv5.size()
+        x = self.conv1(conv5)
+        ppm_out = [x]
+        for pool_scale in self.ppm:
+            ppm_out.append(nn.functional.interpolate(
+                pool_scale(x[:,:self.fc_dim]),
+                (input_size[2], input_size[3]),
+                mode='bilinear', align_corners=False))
+        ppm_out = torch.cat(ppm_out, 1)
+
+        x = self.conv_last(ppm_out)
+
+        if self.use_softmax:  # is True during inference
+            x = nn.functional.interpolate(
+                x, size=segSize, mode='bilinear', align_corners=False)
+            x = nn.functional.softmax(x, dim=1)
+        else:
+            x = nn.functional.log_softmax(x, dim=1)
+        return x
+
+class PPM_Few_Shot_Dropout(nn.Module):
+    def __init__(self, num_class=150, input_dim=1024, fc_dim=256, dropout_rate=0.5,
+                 use_dropout=False, use_softmax=False, pool_scales=(1, 2, 3, 6)):
+        super(PPM_Few_Shot, self).__init__()
+        self.use_softmax = use_softmax
+        self.use_dropout = use_dropout
+        self.fc_dim = fc_dim
+
+        self.ppm = []
+
+        for scale in pool_scales:
+            self.ppm.append(nn.Sequential(
+                nn.AdaptiveAvgPool2d(scale),
+                nn.Conv2d(fc_dim, fc_dim, kernel_size=1, bias=False),
+                nn.BatchNorm2d(fc_dim),
+                nn.ReLU(inplace=True)
+                nn.Dropout2d(p=dropout_rate)
             ))
         self.ppm = nn.ModuleList(self.ppm)
 

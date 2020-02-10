@@ -1231,7 +1231,7 @@ class PPM_Few_Shot(nn.Module):
 class PPM_Few_Shot_Dropout(nn.Module):
     def __init__(self, num_class=150, input_dim=1024, fc_dim=256, dropout_rate=0.5,
                  use_dropout=False, use_softmax=False, pool_scales=(1, 2, 3, 6)):
-        super(PPM_Few_Shot, self).__init__()
+        super(PPM_Few_Shot_Dropout, self).__init__()
         self.use_softmax = use_softmax
         self.use_dropout = use_dropout
         self.fc_dim = fc_dim

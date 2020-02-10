@@ -1243,7 +1243,7 @@ class PPM_Few_Shot_Dropout(nn.Module):
                 nn.AdaptiveAvgPool2d(scale),
                 nn.Conv2d(fc_dim, fc_dim, kernel_size=1, bias=False),
                 nn.BatchNorm2d(fc_dim),
-                nn.ReLU(inplace=True)
+                nn.ReLU(inplace=True),
                 nn.Dropout2d(p=dropout_rate)
             ))
         self.ppm = nn.ModuleList(self.ppm)

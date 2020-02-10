@@ -57,4 +57,4 @@ TEST:
   checkpoint: "epoch_25.pth"
   result: "./"
 
-DIR: "ckpt/resnet50deeplab-globalPool-attDouble-ppm-dropout5e1-voc-fold1-ways1-shots1"
+DIR: "ckpt/resnet50deeplab-globalPool-attDouble-aspp-dropout5e1-voc-fold1-ways1-shots1"

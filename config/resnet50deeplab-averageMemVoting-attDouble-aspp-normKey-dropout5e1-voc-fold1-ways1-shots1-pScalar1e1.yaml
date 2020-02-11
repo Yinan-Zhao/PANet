@@ -23,7 +23,7 @@ MODEL:
   encoder_dim: 1536
   decoder_dim: 513
   normalize_key: True
-  p_scalar: 1.0
+  p_scalar: 10.0
   global_pool_read: False
   use_dropout: True
   dropout_rate: 0.5
@@ -58,4 +58,4 @@ TEST:
   checkpoint: "epoch_25.pth"
   result: "./"
 
-DIR: "ckpt/resnet50deeplab-averageMemVoting-attDouble-aspp-dropout5e1-voc-fold1-ways1-shots1-pScalar1e0"
+DIR: "ckpt/resnet50deeplab-averageMemVoting-attDouble-aspp-normKey-dropout5e1-voc-fold1-ways1-shots1-pScalar1e1"

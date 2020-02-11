@@ -82,6 +82,7 @@ _C.MODEL.memory_noLabel = False
 _C.MODEL.mask_foreground = False
 _C.MODEL.global_pool_read = False
 _C.MODEL.average_memory_voting = False
+_C.MODEL.average_memory_voting_nonorm = False
 _C.MODEL.use_dropout = False
 _C.MODEL.dropout_rate = 0.5
 

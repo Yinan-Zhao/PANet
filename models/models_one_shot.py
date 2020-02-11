@@ -177,7 +177,7 @@ class SegmentationModule(SegmentationModuleBase):
             return pred
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, average_memory_voting_nonorm=False, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -201,6 +201,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.mask_foreground = mask_foreground
         self.global_pool_read = global_pool_read
         self.average_memory_voting = average_memory_voting
+        self.average_memory_voting_nonorm = average_memory_voting_nonorm
 
         self.debug = debug
 
@@ -260,6 +261,38 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
             p = self.p_scalar*torch.mm(torch.transpose(mk_b, 0, 1), qk_b) # Nm, Nq
             p = F.softmax(p, dim=1)
+
+            p_mean = torch.mean(p, dim=0, keepdim=True)
+
+            qread[b,:,qmask[b,0]] = p_mean # dv, Nq
+            # qval[b,:,qmask[b,0]] = read # dv, Nq
+            #qread[b,:,qmask[b,0]] = qread[b,:,qmask[b,0]] + read # dv, Nq
+
+        if debug:
+            return qk_b, mk_b, None, p, qread
+        else:
+            return qread
+
+    def memoryAverageVoting_noNorm(self, qkey, qmask, mkey, mmask, output_shape, debug=False):
+        '''
+        read for *mask area* of query from *mask area* of memory
+        '''
+        B, Dk, _, H, W = mkey.size()
+
+        qread = torch.zeros(output_shape).cuda()
+        # key: b,dk,t,h,w
+        # value: b,dv,t,h,w
+        # mask: b,1,t,h,w
+        for b in range(B):
+            # exceptions
+            if qmask[b,0].sum() == 0 or mmask[b,0].sum() == 0: 
+                # print('skipping read', qmask[b,0].sum(), mmask[b,0].sum())
+                # no query or mask pixels -> skip read
+                continue
+            qk_b = qkey[b,:,qmask[b,0]] # dk, Nq
+            mk_b = mkey[b,:,mmask[b,0]] # dk, Nm
+
+            p = torch.mm(torch.transpose(mk_b, 0, 1), qk_b) # Nm, Nq
 
             p_mean = torch.mean(p, dim=0, keepdim=True)
 
@@ -376,6 +409,12 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                         qk_b, mk_b, mv_b, p, qread = self.memoryAverageVoting(qkey, qmask, mkey, mmask, output_shape, self.debug)
                     else:
                         qread = self.memoryAverageVoting(qkey, qmask, mkey, mmask, output_shape)
+                elif self.average_memory_voting_nonorm:
+                    output_shape = (qval.shape[0], 1, qval.shape[2], qval.shape[3])
+                    if self.debug:
+                        qk_b, mk_b, mv_b, p, qread = self.memoryAverageVoting_noNorm(qkey, qmask, mkey, mmask, output_shape, self.debug)
+                    else:
+                        qread = self.memoryAverageVoting_noNorm(qkey, qmask, mkey, mmask, output_shape)
                 else:
                     if self.debug:
                         qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape, self.debug)
@@ -481,6 +520,12 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     qk_b, mk_b, mv_b, p, qread = self.memoryAverageVoting(qkey, qmask, mkey, mmask, output_shape, self.debug)
                 else:
                     qread = self.memoryAverageVoting(qkey, qmask, mkey, mmask, output_shape)
+            elif self.average_memory_voting_nonorm:
+                output_shape = (qval.shape[0], 1, qval.shape[2], qval.shape[3])
+                if self.debug:
+                    qk_b, mk_b, mv_b, p, qread = self.memoryAverageVoting_noNorm(qkey, qmask, mkey, mmask, output_shape, self.debug)
+                else:
+                    qread = self.memoryAverageVoting_noNorm(qkey, qmask, mkey, mmask, output_shape)
             else:
                 if self.debug:
                     qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape, self.debug)

@@ -1457,38 +1457,38 @@ class ASPP_Few_Shot_BN(nn.Module):
         )
         self.layer6_0 = nn.Sequential(
             nn.Conv2d(fc_dim , fc_dim, kernel_size=1, stride=1, padding=0, bias=True),
-            nn.BatchNorm2d(fc_dim)
+            nn.BatchNorm2d(fc_dim),
             nn.ReLU(),
             nn.Dropout2d(p=dropout_rate),
         )
         self.layer6_1 = nn.Sequential(
             nn.Conv2d(fc_dim , fc_dim, kernel_size=1, stride=1, padding=0, bias=True),
-            nn.BatchNorm2d(fc_dim)
+            nn.BatchNorm2d(fc_dim),
             nn.ReLU(),
             nn.Dropout2d(p=dropout_rate),
             )
         self.layer6_2 = nn.Sequential(
             nn.Conv2d(fc_dim , fc_dim , kernel_size=3, stride=1, padding=6,dilation=6, bias=True),
-            nn.BatchNorm2d(fc_dim)
+            nn.BatchNorm2d(fc_dim),
             nn.ReLU(),
             nn.Dropout2d(p=dropout_rate)
             )
         self.layer6_3 = nn.Sequential(
             nn.Conv2d(fc_dim , fc_dim, kernel_size=3, stride=1, padding=12, dilation=12, bias=True),
-            nn.BatchNorm2d(fc_dim)
+            nn.BatchNorm2d(fc_dim),
             nn.ReLU(),
             nn.Dropout2d(p=dropout_rate)
             )
         self.layer6_4 = nn.Sequential(
             nn.Conv2d(fc_dim , fc_dim , kernel_size=3, stride=1, padding=18, dilation=18, bias=True),
-            nn.BatchNorm2d(fc_dim)
+            nn.BatchNorm2d(fc_dim),
             nn.ReLU(),
             nn.Dropout2d(p=dropout_rate)
             )
         self.conv_last = nn.Sequential(
             nn.Conv2d(fc_dim+4*fc_dim, fc_dim,
                       kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(fc_dim)
+            nn.BatchNorm2d(fc_dim),
             nn.ReLU(inplace=True),
             nn.Dropout2d(dropout_rate),
             nn.Conv2d(fc_dim, num_class, kernel_size=1)

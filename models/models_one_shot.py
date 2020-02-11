@@ -623,6 +623,14 @@ class ModelBuilder:
                 dropout_rate=dropout_rate,
                 use_dropout=use_dropout,
                 use_softmax=use_softmax)
+        elif arch == 'aspp_few_shot_bn':
+            net_decoder = ASPP_Few_Shot_BN(
+                num_class=num_class,
+                input_dim=input_dim,
+                fc_dim=ppm_dim,
+                dropout_rate=dropout_rate,
+                use_dropout=use_dropout,
+                use_softmax=use_softmax)
         elif arch == 'ppm_deepsup':
             net_decoder = PPMDeepsup(
                 num_class=num_class,
@@ -1409,6 +1417,78 @@ class ASPP_Few_Shot(nn.Module):
         self.conv_last = nn.Sequential(
             nn.Conv2d(fc_dim+4*fc_dim, fc_dim,
                       kernel_size=3, padding=1, bias=False),
+            nn.ReLU(inplace=True),
+            nn.Dropout2d(dropout_rate),
+            nn.Conv2d(fc_dim, num_class, kernel_size=1)
+        )
+
+    def forward(self, conv_out, segSize=None):
+        conv5 = conv_out[-1]
+
+        x = self.conv1(conv5)
+        feature_size = x.shape[-2:]
+
+        global_feature = F.avg_pool2d(x, kernel_size=feature_size)
+        global_feature = self.layer6_0(global_feature)
+        global_feature = global_feature.expand(-1,-1,feature_size[0],feature_size[1])
+        out = torch.cat([global_feature, self.layer6_1(x), self.layer6_2(x), self.layer6_3(x), self.layer6_4(x)], dim=1)
+
+        x = self.conv_last(out)
+
+        if self.use_softmax:  # is True during inference
+            x = nn.functional.interpolate(
+                x, size=segSize, mode='bilinear', align_corners=False)
+            x = nn.functional.softmax(x, dim=1)
+        else:
+            x = nn.functional.log_softmax(x, dim=1)
+        return x
+
+class ASPP_Few_Shot_BN(nn.Module):
+    def __init__(self, num_class=150, input_dim=1024, fc_dim=256, dropout_rate=0.5,
+                 use_dropout=False, use_softmax=False):
+        super(ASPP_Few_Shot_BN, self).__init__()
+        self.use_softmax = use_softmax
+        self.use_dropout = use_dropout
+        self.fc_dim = fc_dim
+
+        self.conv1 = nn.Sequential(
+            conv3x3_bn_relu(input_dim, fc_dim, 1),
+            nn.Dropout2d(p=dropout_rate)
+        )
+        self.layer6_0 = nn.Sequential(
+            nn.Conv2d(fc_dim , fc_dim, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(fc_dim)
+            nn.ReLU(),
+            nn.Dropout2d(p=dropout_rate),
+        )
+        self.layer6_1 = nn.Sequential(
+            nn.Conv2d(fc_dim , fc_dim, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(fc_dim)
+            nn.ReLU(),
+            nn.Dropout2d(p=dropout_rate),
+            )
+        self.layer6_2 = nn.Sequential(
+            nn.Conv2d(fc_dim , fc_dim , kernel_size=3, stride=1, padding=6,dilation=6, bias=True),
+            nn.BatchNorm2d(fc_dim)
+            nn.ReLU(),
+            nn.Dropout2d(p=dropout_rate)
+            )
+        self.layer6_3 = nn.Sequential(
+            nn.Conv2d(fc_dim , fc_dim, kernel_size=3, stride=1, padding=12, dilation=12, bias=True),
+            nn.BatchNorm2d(fc_dim)
+            nn.ReLU(),
+            nn.Dropout2d(p=dropout_rate)
+            )
+        self.layer6_4 = nn.Sequential(
+            nn.Conv2d(fc_dim , fc_dim , kernel_size=3, stride=1, padding=18, dilation=18, bias=True),
+            nn.BatchNorm2d(fc_dim)
+            nn.ReLU(),
+            nn.Dropout2d(p=dropout_rate)
+            )
+        self.conv_last = nn.Sequential(
+            nn.Conv2d(fc_dim+4*fc_dim, fc_dim,
+                      kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(fc_dim)
             nn.ReLU(inplace=True),
             nn.Dropout2d(dropout_rate),
             nn.Conv2d(fc_dim, num_class, kernel_size=1)

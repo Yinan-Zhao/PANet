@@ -177,7 +177,7 @@ class SegmentationModule(SegmentationModuleBase):
             return pred
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, average_memory_voting_nonorm=False, debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, average_memory_voting_nonorm=False, mask_memory_RGB=False, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -202,6 +202,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.global_pool_read = global_pool_read
         self.average_memory_voting = average_memory_voting
         self.average_memory_voting_nonorm = average_memory_voting_nonorm
+        self.mask_memory_RGB = mask_memory_RGB
 
         self.debug = debug
 
@@ -352,6 +353,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 feature_enc = self.encoder_query(feed_dict['img_data'], return_feature_maps=True)    
          
                 qkey, qval = self.attention_query(feature_enc)
+
+                if self.mask_memory_RGB:
+                    for i in range(3):
+                        feed_dict['img_refs_rgb'][:,i] = feed_dict['img_refs_rgb'][:,i]*feed_dict['img_refs_mask'][:,1]
                 
                 feature_memory = self.memoryEncode(self.encoder_query, feed_dict['img_refs_rgb'], return_feature_maps=True)
                 

@@ -43,10 +43,10 @@ TRAIN:
   deep_sup_scale: 0.4
   fix_bn: False
   workers: 4
-  disp_iter: 200
+  disp_iter: 1
   seed: 304
   save_freq: 200000
-  eval_freq: 100
+  eval_freq: 20
   permute_labels: False
   fix_encoder: False
 

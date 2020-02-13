@@ -51,7 +51,7 @@ TRAIN:
   fix_encoder: False
 
 VAL:
-  n_runs: 3
+  n_runs: 1
   visualize: False
   checkpoint: "iter_10000.pth"
 

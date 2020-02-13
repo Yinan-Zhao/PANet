@@ -96,6 +96,7 @@ _C.TRAIN.n_batch = 8
 
 # epoch to start training. useful if continue from a checkpoint
 _C.TRAIN.start_iter = 0
+_C.TRAIN.start_from = ''
 # iterations of each epoch (irrelevant to batch size)
 
 _C.TRAIN.optim = "SGD"

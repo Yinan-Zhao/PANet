@@ -425,17 +425,17 @@ if __name__ == '__main__':
         f.write("{}".format(cfg))
 
     # Start from checkpoint
-    if cfg.TRAIN.start_iter > 0:
+    if cfg.TRAIN.start_from:
         cfg.MODEL.weights_enc_query = os.path.join(
-            cfg.DIR, 'enc_query_iter_{}.pth'.format(cfg.TRAIN.start_iter))
+            cfg.DIR, 'enc_query_iter_{}.pth'.format(cfg.TRAIN.start_from))
         cfg.MODEL.weights_enc_memory = os.path.join(
-            cfg.DIR, 'enc_memory_iter_{}.pth'.format(cfg.TRAIN.start_iter))
+            cfg.DIR, 'enc_memory_iter_{}.pth'.format(cfg.TRAIN.start_from))
         cfg.MODEL.weights_att_query = os.path.join(
-            cfg.DIR, 'att_query_iter_{}.pth'.format(cfg.TRAIN.start_iter))
+            cfg.DIR, 'att_query_iter_{}.pth'.format(cfg.TRAIN.start_from))
         cfg.MODEL.weights_att_memory = os.path.join(
-            cfg.DIR, 'att_memory_iter_{}.pth'.format(cfg.TRAIN.start_iter))
+            cfg.DIR, 'att_memory_iter_{}.pth'.format(cfg.TRAIN.start_from))
         cfg.MODEL.weights_decoder = os.path.join(
-            cfg.DIR, 'decoder_iter_{}.pth'.format(cfg.TRAIN.start_iter))
+            cfg.DIR, 'decoder_iter_{}.pth'.format(cfg.TRAIN.start_from))
         assert os.path.exists(cfg.MODEL.weights_enc_query) and os.path.exists(cfg.MODEL.weights_enc_memory) and \
             os.path.exists(cfg.MODEL.weights_att_query) and os.path.exists(cfg.MODEL.weights_att_memory) and \
             os.path.exists(cfg.MODEL.weights_decoder), "checkpoint does not exitst!"

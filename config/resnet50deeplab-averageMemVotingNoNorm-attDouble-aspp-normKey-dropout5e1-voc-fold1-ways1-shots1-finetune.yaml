@@ -32,7 +32,7 @@ MODEL:
 
 TRAIN:
   n_iters: 600000
-  start_iter: best
+  start_from: "best"
   n_batch: 4
   optim: "SGD"
   lr_encoder: 0.02

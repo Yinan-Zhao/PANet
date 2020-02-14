@@ -21,7 +21,7 @@ MODEL:
   att_mat_downsample_rate: 1
   fc_dim: 256
   encoder_dim: 1536
-  decoder_dim: 257
+  decoder_dim: 129
   normalize_key: True
   global_pool_read: False
   use_dropout: True

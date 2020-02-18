@@ -24,7 +24,7 @@ MODEL:
   fc_dim: 256
   projection_dim: 8
   encoder_dim: 1536
-  decoder_dim: 130
+  decoder_dim: 129
   normalize_key: True
   global_pool_read: False
   use_dropout: True
@@ -32,15 +32,15 @@ MODEL:
   mask_foreground: True
   average_memory_voting: False
   average_memory_voting_nonorm: True
-  linear_classifier_support: True
+  linear_classifier_support: False
 
 TRAIN:
   n_iters: 600000
   start_iter: 0
   n_batch: 4
   optim: "SGD"
-  lr_encoder: 0.002
-  lr_decoder: 0.002
+  lr_encoder: 0.02
+  lr_decoder: 0.02
   lr_pow: 0.9
   beta1: 0.9
   weight_decay: 1e-4

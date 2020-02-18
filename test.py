@@ -393,8 +393,7 @@ if __name__ == '__main__':
                 os.path.exists(cfg.MODEL.weights_decoder), "checkpoint does not exitst!"
         if cfg.MODEL.arch_projection:
             cfg.MODEL.weights_projection = os.path.join(
-                cfg.DIR, 'projection_iter_{}.pth'.format(cfg.TRAIN.start_from))
-            print(cfg.MODEL.weights_projection)
+                cfg.DIR, 'projection_iter_{}.pth'.format(cfg.VAL.checkpoint))
             assert os.path.exists(cfg.MODEL.weights_projection)
 
     if not os.path.isdir(os.path.join(cfg.DIR, "result")):

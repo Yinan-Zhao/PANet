@@ -54,6 +54,8 @@ _C.MODEL.arch_memory_encoder = "C3_Encoder_Memory"
 _C.MODEL.arch_attention = "attention"
 # architecture of net_decoder
 _C.MODEL.arch_decoder = "ppm_deepsup"
+# architecture of net_projection
+_C.MODEL.arch_projection = ""
 # weights to finetune net_encoder
 _C.MODEL.weights_encoder = ""
 # weights to finetune net_decoder
@@ -62,9 +64,11 @@ _C.MODEL.weights_enc_query = ""
 _C.MODEL.weights_enc_memory = ""
 _C.MODEL.weights_att_query = ""
 _C.MODEL.weights_att_memory = ""
+_C.MODEL.weights_projection = ""
 # number of feature channels between encoder and decoder
 _C.MODEL.encoder_dim = 1536
 _C.MODEL.fc_dim = 512
+_C.MODEL.projection_dim = 8
 _C.MODEL.decoder_dim = 1024
 _C.MODEL.ppm_dim = 256
 _C.MODEL.mask_feat_downsample_rate = 1
@@ -84,8 +88,10 @@ _C.MODEL.global_pool_read = False
 _C.MODEL.average_memory_voting = False
 _C.MODEL.average_memory_voting_nonorm = False
 _C.MODEL.mask_memory_RGB = False
+_C.MODEL.linear_classifier_support = False
 _C.MODEL.use_dropout = False
 _C.MODEL.dropout_rate = 0.5
+_C.MODEL.decay_lamb = 1.0
 
 # -----------------------------------------------------------------------------
 # Training

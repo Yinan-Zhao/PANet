@@ -61,7 +61,7 @@ def data_preprocess(sample_batched, cfg, is_val=False):
 
 def checkpoint(nets, history, cfg, iter_idx):
     print('Saving checkpoints...')
-    (net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit) = nets
+    (net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, net_projection, crit) = nets
 
     dict_enc_query = net_enc_query.state_dict()
     dict_enc_memory = net_enc_memory.state_dict()
@@ -87,6 +87,11 @@ def checkpoint(nets, history, cfg, iter_idx):
     torch.save(
         dict_decoder,
         '{}/decoder_iter_{}.pth'.format(cfg.DIR, iter_idx))
+    if net_projection:
+        dict_projection = net_projection.state_dict()
+        torch.save(
+            dict_projection,
+            '{}/projection_iter_{}.pth'.format(cfg.DIR, iter_idx))
 
 def group_weight(module):
     group_decay = []
@@ -111,7 +116,7 @@ def group_weight(module):
     return groups
 
 def create_optimizers(nets, cfg):
-    (net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit) = nets
+    (net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, net_projection, crit) = nets
     if cfg.TRAIN.fix_encoder:
         optimizer_enc_query = None
     else:
@@ -135,19 +140,26 @@ def create_optimizers(nets, cfg):
         lr=cfg.TRAIN.lr_encoder,
         momentum=cfg.TRAIN.beta1,
         weight_decay=cfg.TRAIN.weight_decay)
+    optimizer_projection = None
+    if net_projection:
+        optimizer_projection = torch.optim.SGD(
+            group_weight(net_projection),
+            lr=cfg.TRAIN.lr_encoder,
+            momentum=cfg.TRAIN.beta1,
+            weight_decay=cfg.TRAIN.weight_decay)
     optimizer_decoder = torch.optim.SGD(
         group_weight(net_decoder),
         lr=cfg.TRAIN.lr_decoder,
         momentum=cfg.TRAIN.beta1,
         weight_decay=cfg.TRAIN.weight_decay)
-    return (optimizer_enc_query, optimizer_enc_memory, optimizer_att_query, optimizer_att_memory, optimizer_decoder)
+    return (optimizer_enc_query, optimizer_enc_memory, optimizer_att_query, optimizer_att_memory, optimizer_decoder, optimizer_projection)
 
 def adjust_learning_rate(optimizers, cur_iter, cfg):
     scale_running_lr = ((1. - float(cur_iter) / cfg.TRAIN.max_iters) ** cfg.TRAIN.lr_pow)
     cfg.TRAIN.running_lr_encoder = cfg.TRAIN.lr_encoder * scale_running_lr
     cfg.TRAIN.running_lr_decoder = cfg.TRAIN.lr_decoder * scale_running_lr
 
-    (optimizer_enc_query, optimizer_enc_memory, optimizer_att_query, optimizer_att_memory, optimizer_decoder) = optimizers
+    (optimizer_enc_query, optimizer_enc_memory, optimizer_att_query, optimizer_att_memory, optimizer_decoder, optimizer_projection) = optimizers
     if not cfg.TRAIN.fix_encoder:
         for param_group in optimizer_enc_query.param_groups:
             param_group['lr'] = cfg.TRAIN.running_lr_encoder
@@ -159,6 +171,9 @@ def adjust_learning_rate(optimizers, cur_iter, cfg):
         param_group['lr'] = cfg.TRAIN.running_lr_encoder
     for param_group in optimizer_decoder.param_groups:
         param_group['lr'] = cfg.TRAIN.running_lr_decoder
+    if optimizer_projection:
+        for param_group in optimizer_projection.param_groups:
+            param_group['lr'] = cfg.TRAIN.running_lr_decoder
 
 
 def main(cfg, gpus):
@@ -187,6 +202,11 @@ def main(cfg, gpus):
         input_dim=cfg.MODEL.fc_dim,
         fc_dim=cfg.MODEL.fc_dim,
         weights=cfg.MODEL.weights_att_memory)
+    net_projection = ModelBuilder.build_projection(
+        arch=cfg.MODEL.arch_projection,
+        input_dim=cfg.MODEL.encoder_dim,
+        fc_dim=cfg.MODEL.projection_dim,
+        weights=cfg.MODEL.weights_projection)
     net_decoder = ModelBuilder.build_decoder(
         arch=cfg.MODEL.arch_decoder.lower(),
         input_dim=cfg.MODEL.decoder_dim,
@@ -199,12 +219,8 @@ def main(cfg, gpus):
 
     crit = nn.NLLLoss(ignore_index=255)
 
-    if cfg.MODEL.arch_decoder.endswith('deepsup'):
-        segmentation_module = SegmentationAttentionSeparateModule(
-            net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, cfg.TRAIN.deep_sup_scale, zero_memory=cfg.MODEL.zero_memory, random_memory_bias=cfg.MODEL.random_memory_bias, random_memory_nobias=cfg.MODEL.random_memory_nobias, random_scale=cfg.MODEL.random_scale, zero_qval=cfg.MODEL.zero_qval, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate, segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate, mask_foreground=cfg.MODEL.mask_foreground, global_pool_read=cfg.MODEL.global_pool_read, average_memory_voting=cfg.MODEL.average_memory_voting, average_memory_voting_nonorm=cfg.MODEL.average_memory_voting_nonorm, mask_memory_RGB=cfg.MODEL.mask_memory_RGB)
-    else:
-        segmentation_module = SegmentationAttentionSeparateModule(
-            net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit, zero_memory=cfg.MODEL.zero_memory, random_memory_bias=cfg.MODEL.random_memory_bias, random_memory_nobias=cfg.MODEL.random_memory_nobias, random_scale=cfg.MODEL.random_scale, zero_qval=cfg.MODEL.zero_qval, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate, segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate, mask_foreground=cfg.MODEL.mask_foreground, global_pool_read=cfg.MODEL.global_pool_read, average_memory_voting=cfg.MODEL.average_memory_voting, average_memory_voting_nonorm=cfg.MODEL.average_memory_voting_nonorm, mask_memory_RGB=cfg.MODEL.mask_memory_RGB)
+    segmentation_module = SegmentationAttentionSeparateModule(
+        net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, net_projection, crit, zero_memory=cfg.MODEL.zero_memory, random_memory_bias=cfg.MODEL.random_memory_bias, random_memory_nobias=cfg.MODEL.random_memory_nobias, random_scale=cfg.MODEL.random_scale, zero_qval=cfg.MODEL.zero_qval, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate, segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate, mask_foreground=cfg.MODEL.mask_foreground, global_pool_read=cfg.MODEL.global_pool_read, average_memory_voting=cfg.MODEL.average_memory_voting, average_memory_voting_nonorm=cfg.MODEL.average_memory_voting_nonorm, mask_memory_RGB=cfg.MODEL.mask_memory_RGB, linear_classifier_support=cfg.MODEL.linear_classifier_support, decay_lamb=cfg.MODEL.decay_lamb)
 
 
     print('###### Load data ######')
@@ -248,7 +264,7 @@ def main(cfg, gpus):
     segmentation_module.cuda()
 
     # Set up optimizers
-    nets = (net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, crit)
+    nets = (net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, net_projection, crit)
     optimizers = create_optimizers(nets, cfg)
 
     batch_time = AverageMeter()
@@ -439,6 +455,10 @@ if __name__ == '__main__':
         assert os.path.exists(cfg.MODEL.weights_enc_query) and os.path.exists(cfg.MODEL.weights_enc_memory) and \
             os.path.exists(cfg.MODEL.weights_att_query) and os.path.exists(cfg.MODEL.weights_att_memory) and \
             os.path.exists(cfg.MODEL.weights_decoder), "checkpoint does not exitst!"
+        if cfg.MODEL.arch_projection:
+            cfg.MODEL.weights_projection = os.path.join(
+                cfg.DIR, 'projection_iter_{}.pth'.format(cfg.TRAIN.start_from))
+            assert os.path.exists(cfg.MODEL.weights_projection)
 
     # Parse gpu ids
     gpus = parse_devices(args.gpus)

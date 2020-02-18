@@ -177,13 +177,14 @@ class SegmentationModule(SegmentationModuleBase):
             return pred
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, average_memory_voting_nonorm=False, mask_memory_RGB=False, debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, net_projection, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, average_memory_voting_nonorm=False, mask_memory_RGB=False, linear_classifier_support=False, decay_lamb=1.0, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
         self.attention_query = net_att_query
         self.attention_memory = net_att_memory
         self.decoder = net_dec
+        self.projection = net_projection
         self.crit = crit
         self.deep_sup_scale = deep_sup_scale
         self.zero_memory = zero_memory
@@ -203,6 +204,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.average_memory_voting = average_memory_voting
         self.average_memory_voting_nonorm = average_memory_voting_nonorm
         self.mask_memory_RGB = mask_memory_RGB
+        self.linear_classifier_support = linear_classifier_support
+        self.decay_lamb = decay_lamb
 
         self.debug = debug
 
@@ -335,6 +338,44 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         vals = torch.stack(val_, dim=2)
         return keys, vals
 
+    def memoryProjection(self, proj_module, feat):
+        key_ = []
+        batch_size, _, num_frames, height, width = feat[-1].size()
+        for t in range(num_frames):
+            key = proj_module([feat_item[:,:,t] for feat_item in feat])
+            key_.append(key)
+
+        keys = torch.stack(key_, dim=2)
+        return keys
+
+    def linear_classify(self, qproj, mproj, mmask, output_shape, debug=False):
+        B, Dk, T, H, W = mproj.size()
+        B_q, Dk_q, H_q, W_q = qproj.size()
+        assert B_q==B and Dk==Dk_q and H==H_q and W==W_q
+
+        qread = torch.zeros(output_shape).cuda()
+        # key: b,dk,t,h,w
+        # value: b,dv,t,h,w
+        # mask: b,1,t,h,w
+        for b in range(B):
+            # exceptions
+            if mmask[b,0].sum() == 0: 
+                # print('skipping read', qmask[b,0].sum(), mmask[b,0].sum())
+                # no query or mask pixels -> skip read
+                continue            
+            m_x = torch.reshape(mproj[b], (Dk,-1)) # dk, Nm
+            m_y = torch.reshape(mmask[b], (1,-1))
+            w = torch.mm(torch.inverse(torch.mm(m_x, torch.t(m_x))+self.decay_lamb), torch.mm(m_x, torch.t(m_y)))
+            q_x = torch.reshape(qproj[b], (Dk,-1)) # dk, Nq
+            q_y = torch.mm(torch.t(w), q_x)
+
+            qread[b] = torch.reshape(q_y, (q_y.shape[0],H,W))
+
+        if debug:
+            return w, qread
+        else:
+            return qread
+
     def downsample_5d(self, feat, downsample_rate, mode='bilinear'):
         # feat: b,dk,t,h,w
         feat_downsample = torch.zeros(feat.shape[0], feat.shape[1], feat.shape[2], feat.shape[3]//downsample_rate, feat.shape[4]//downsample_rate).cuda()
@@ -442,6 +483,14 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     z = F.avg_pool2d(input=z,
                                      kernel_size=mval_rgb.shape[-2:]) * h * w / area
                     qread = z.expand(-1, -1, mval_rgb.shape[-2], mval_rgb.shape[-1])  # tile for cat
+
+                if self.linear_classifier_support:
+                    output_linear_shape = (qval.shape[0], 1, qval.shape[2], qval.shape[3])
+                    m_y = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=self.segm_downsampling_rate, mode='nearest')
+                    mproj = self.memoryProjection(self.projection, feature_memory)
+                    qproj = self.projection(feature_enc)
+                    qread_linear = self.linear_classify(qproj, mproj, m_y, output_linear_shape, debug=False)
+                    qread = torch.cat((qread_linear, qread), dim=1)
 
                 if self.zero_qval:
                     qval = torch.zeros_like(qval)
@@ -554,6 +603,14 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                                  kernel_size=mval_rgb.shape[-2:]) * h * w / area
                 qread = z.expand(-1, -1, mval_rgb.shape[-2], mval_rgb.shape[-1])  # tile for cat
 
+            if self.linear_classifier_support:
+                output_linear_shape = (qval.shape[0], 1, qval.shape[2], qval.shape[3])
+                m_y = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=self.segm_downsampling_rate, mode='nearest')
+                mproj = self.memoryProjection(self.projection, feature_memory)
+                qproj = self.projection(feature_enc)
+                qread_linear = self.linear_classify(qproj, mproj, m_y, output_linear_shape, debug=False)
+                qread = torch.cat((qread_linear, qread), dim=1)
+
             if self.zero_qval:
                 qval = torch.zeros_like(qval)
 
@@ -652,6 +709,24 @@ class ModelBuilder:
             net_encoder = AttModule(input_dim=input_dim, fc_dim=fc_dim)
         elif arch == 'attention_double':
             net_encoder = AttModule_Double(input_dim=input_dim, fc_dim=fc_dim)
+        else:
+            raise Exception('Architecture undefined!')
+
+        # encoders are usually pretrained
+        # net_encoder.apply(ModelBuilder.weights_init)
+        if len(weights) > 0:
+            print('Loading weights for net_att_query')
+            net_encoder.load_state_dict(
+                torch.load(weights, map_location=lambda storage, loc: storage), strict=False)
+        return net_encoder
+
+    @staticmethod
+    def build_projection(arch='projection', input_dim=512, fc_dim=8, weights=''):
+        arch = arch.lower()
+        if arch == 'projection':
+            net_encoder = ProjModule(input_dim=input_dim, fc_dim=fc_dim)
+        elif arch == '':
+            return None
         else:
             raise Exception('Architecture undefined!')
 
@@ -1223,6 +1298,18 @@ class AttModule_Double(nn.Module):
 
         return key, value
 
+class ProjModule(nn.Module):
+    def __init__(self, input_dim=512, fc_dim=8):
+        super(ProjModule, self).__init__()
+
+        self.key_conv = nn.Conv2d(input_dim, fc_dim, kernel_size=1,
+                      stride=1, padding=0, bias=False)
+
+    def forward(self, conv_out):
+        conv5 = conv_out[-1]
+        projection = self.key_conv(conv5)
+
+        return projection
 
 # pyramid pooling
 class PPM(nn.Module):

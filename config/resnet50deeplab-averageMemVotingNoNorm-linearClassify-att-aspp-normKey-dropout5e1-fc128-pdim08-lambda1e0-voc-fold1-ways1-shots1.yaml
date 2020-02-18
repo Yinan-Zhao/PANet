@@ -24,7 +24,7 @@ MODEL:
   fc_dim: 256
   projection_dim: 8
   encoder_dim: 1536
-  decoder_dim: 129
+  decoder_dim: 130
   normalize_key: True
   global_pool_read: False
   use_dropout: True
@@ -32,7 +32,7 @@ MODEL:
   mask_foreground: True
   average_memory_voting: False
   average_memory_voting_nonorm: True
-  linear_classifier_support: False
+  linear_classifier_support: True
 
 TRAIN:
   n_iters: 600000
@@ -47,14 +47,14 @@ TRAIN:
   deep_sup_scale: 0.4
   fix_bn: False
   workers: 4
-  disp_iter: 20
+  disp_iter: 200
   seed: 304
   save_freq: 200000
-  eval_freq: 100
+  eval_freq: 10000
   permute_labels: False
 
 VAL:
-  n_runs: 1
+  n_runs: 3
   visualize: False
   checkpoint: "iter_10000.pth"
 

@@ -17,6 +17,7 @@ MODEL:
   arch_memory_encoder: "c1"
   arch_attention: "attention"
   arch_decoder: "aspp_few_shot"
+  arch_projection: "projection"
   decay_lamb: 1.0
   mask_feat_downsample_rate: 1
   att_mat_downsample_rate: 1

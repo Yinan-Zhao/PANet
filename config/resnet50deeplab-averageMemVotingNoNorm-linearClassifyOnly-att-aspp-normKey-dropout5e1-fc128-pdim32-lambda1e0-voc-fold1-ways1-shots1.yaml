@@ -22,7 +22,7 @@ MODEL:
   mask_feat_downsample_rate: 1
   att_mat_downsample_rate: 1
   fc_dim: 256
-  projection_dim: 8
+  projection_dim: 32
   encoder_dim: 1536
   decoder_dim: 129
   normalize_key: True
@@ -63,4 +63,4 @@ TEST:
   checkpoint: "epoch_25.pth"
   result: "./"
 
-DIR: "ckpt/resnet50deeplab-averageMemVotingNoNorm-linearClassifyOnly-att-aspp-normKey-dropout5e1-fc128-pdim08-lambda1e0-voc-fold1-ways1-shots1"
+DIR: "ckpt/resnet50deeplab-averageMemVotingNoNorm-linearClassifyOnly-att-aspp-normKey-dropout5e1-fc128-pdim32-lambda1e0-voc-fold1-ways1-shots1"

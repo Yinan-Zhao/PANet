@@ -89,6 +89,7 @@ _C.MODEL.average_memory_voting = False
 _C.MODEL.average_memory_voting_nonorm = False
 _C.MODEL.mask_memory_RGB = False
 _C.MODEL.linear_classifier_support = False
+_C.MODEL.linear_classifier_support_only = False
 _C.MODEL.use_dropout = False
 _C.MODEL.dropout_rate = 0.5
 _C.MODEL.decay_lamb = 1.0

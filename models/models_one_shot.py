@@ -177,7 +177,7 @@ class SegmentationModule(SegmentationModuleBase):
             return pred
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, net_projection, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, average_memory_voting_nonorm=False, mask_memory_RGB=False, linear_classifier_support=False, decay_lamb=1.0, debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, net_projection, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, average_memory_voting_nonorm=False, mask_memory_RGB=False, linear_classifier_support=False, decay_lamb=1.0, linear_classifier_support_only=False, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -206,6 +206,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.mask_memory_RGB = mask_memory_RGB
         self.linear_classifier_support = linear_classifier_support
         self.decay_lamb = decay_lamb
+        self.linear_classifier_support_only = linear_classifier_support_only
 
         self.debug = debug
 
@@ -490,7 +491,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     mproj = self.memoryProjection(self.projection, feature_memory)
                     qproj = self.projection(feature_enc)
                     qread_linear = self.linear_classify(qproj, mproj, m_y, output_linear_shape, debug=False)
-                    qread = torch.cat((qread_linear, qread), dim=1)
+                    if self.linear_classifier_support_only:
+                        qread = qread_linear
+                    else:
+                        qread = torch.cat((qread_linear, qread), dim=1)
 
                 if self.zero_qval:
                     qval = torch.zeros_like(qval)
@@ -609,7 +613,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 mproj = self.memoryProjection(self.projection, feature_memory)
                 qproj = self.projection(feature_enc)
                 qread_linear = self.linear_classify(qproj, mproj, m_y, output_linear_shape, debug=False)
-                qread = torch.cat((qread_linear, qread), dim=1)
+                if self.linear_classifier_support_only:
+                    qread = qread_linear
+                else:
+                    qread = torch.cat((qread_linear, qread), dim=1)
 
             if self.zero_qval:
                 qval = torch.zeros_like(qval)

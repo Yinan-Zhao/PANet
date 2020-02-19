@@ -68,7 +68,7 @@ _C.MODEL.weights_projection = ""
 # number of feature channels between encoder and decoder
 _C.MODEL.encoder_dim = 1536
 _C.MODEL.fc_dim = 512
-_C.MODEL.projection_intput_dim = 2048
+_C.MODEL.projection_input_dim = 2048
 _C.MODEL.projection_dim = 8
 _C.MODEL.decoder_dim = 1024
 _C.MODEL.ppm_dim = 256

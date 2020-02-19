@@ -24,7 +24,7 @@ MODEL:
   fc_dim: 256
   projection_dim: 8
   encoder_dim: 1536
-  decoder_dim: 129
+  decoder_dim: 130
   normalize_key: True
   global_pool_read: False
   use_dropout: True

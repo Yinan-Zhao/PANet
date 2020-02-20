@@ -113,6 +113,65 @@ class ResNet_Deeplab(nn.Module):
         else:
             return x
 
+class ResNet_Deeplab_Objectness(nn.Module):
+    def __init__(self, block, layers):
+        self.inplanes = 64
+        super(ResNet_Deeplab_Objectness, self).__init__()
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
+                               bias=False)
+        self.bn1 = nn.BatchNorm2d(64, affine = affine_par)
+        for i in self.bn1.parameters():
+            i.requires_grad = False
+        self.relu = nn.ReLU(inplace=True)
+        #self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.layer1 = self._make_layer(block, 64, layers[0])
+        self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
+        self.layer3 = self._make_layer(block, 256, layers[2], stride=1, dilation=2)
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=1, dilation=4)
+        
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, 0.01)
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+
+
+    def _make_layer(self, block, planes, blocks, stride=1, dilation=1):
+        downsample = None
+        if stride != 1 or self.inplanes != planes * block.expansion or dilation == 2 or dilation == 4:
+            downsample = nn.Sequential(
+                nn.Conv2d(self.inplanes, planes * block.expansion,
+                          kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(planes * block.expansion,affine = affine_par))
+        for i in downsample._modules['1'].parameters():
+            i.requires_grad = False
+        layers = []
+        layers.append(block(self.inplanes, planes, stride,dilation=dilation, downsample=downsample))
+        self.inplanes = planes * block.expansion
+        for i in range(1, blocks):
+            layers.append(block(self.inplanes, planes, dilation=dilation))
+
+        return nn.Sequential(*layers)
+
+    def forward(self, x, return_feature_maps=True):
+        # important: do not optimize the RESNET backbone
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+       
+        if return_feature_maps:
+            return [x]
+        else:
+            return x
+
 def load_resnet50_param(model, stop_layer='layer4'):
     resnet50 = torchvision.models.resnet50(pretrained=True)
     saved_state_dict = resnet50.state_dict()
@@ -132,6 +191,12 @@ def ResNet50_Deeplab(pretrained=True, **kwargs):
     model = ResNet_Deeplab(Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
         model=load_resnet50_param(model)
+    return model
+
+def ResNet50_Deeplab_Objectness(pretrained=True, **kwargs):
+    model = ResNet_Deeplab_Objectness(Bottleneck, [3, 4, 6, 3], **kwargs)
+    if pretrained:
+        model=load_resnet50_param(model, stop_layer='fc')
     return model
 
 
@@ -710,6 +775,27 @@ class ModelBuilder:
         return net_encoder
 
     @staticmethod
+    def build_objectness(arch='resnet50_deeplab', weights='', fix_encoder=True):
+        pretrained = True if len(weights) == 0 else False
+        arch = arch.lower()
+        if arch == 'resnet50_deeplab':
+            net_encoder = ResNet50_Deeplab_Objectness(pretrained=pretrained)
+        else:
+            raise Exception('Architecture undefined!')
+
+        # encoders are usually pretrained
+        # net_encoder.apply(ModelBuilder.weights_init)
+        if len(weights) > 0:
+            print('Loading weights for net_encoder')
+            net_encoder.load_state_dict(
+                torch.load(weights, map_location=lambda storage, loc: storage), strict=False)
+
+        if fix_encoder:
+            for param in net_encoder.parameters():
+                param.requires_grad = False
+        return net_encoder
+
+    @staticmethod
     def build_attention(arch='attention', input_dim=512, fc_dim=512, weights=''):
         arch = arch.lower()
         if arch == 'attention':
@@ -895,7 +981,6 @@ class Resnet(nn.Module):
         if return_feature_maps:
             return conv_out
         return [x]
-
 
 class ResnetDilated(nn.Module):
     def __init__(self, orig_resnet, dilate_scale=8):

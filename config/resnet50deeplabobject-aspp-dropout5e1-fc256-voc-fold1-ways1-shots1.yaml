@@ -15,7 +15,7 @@ TASK:
 MODEL:
   arch_decoder: "aspp_few_shot"
   fc_dim: 256
-  decoder_dim: 256
+  decoder_dim: 2048
   use_dropout: True
   dropout_rate: 0.5
 

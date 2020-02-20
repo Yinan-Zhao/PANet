@@ -18,7 +18,7 @@ MODEL:
   decoder_dim: 256
   use_dropout: True
   dropout_rate: 0.5
-
+  fix_encoder: False
 
 TRAIN:
   n_iters: 600000

@@ -24,8 +24,8 @@ TRAIN:
   start_iter: 0
   n_batch: 4
   optim: "SGD"
-  lr_encoder: 0.02
-  lr_decoder: 0.02
+  lr_encoder: 0.002
+  lr_decoder: 0.002
   lr_pow: 0.9
   beta1: 0.9
   weight_decay: 1e-4

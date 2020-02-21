@@ -242,7 +242,7 @@ class SegmentationModule(SegmentationModuleBase):
             return pred
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, net_projection, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, average_memory_voting_nonorm=False, mask_memory_RGB=False, linear_classifier_support=False, decay_lamb=1.0, linear_classifier_support_only=False, debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, net_projection, net_objectness, net_objectness_decoder, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, average_memory_voting_nonorm=False, mask_memory_RGB=False, linear_classifier_support=False, decay_lamb=1.0, linear_classifier_support_only=False, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -250,6 +250,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.attention_memory = net_att_memory
         self.decoder = net_dec
         self.projection = net_projection
+        self.objectness = net_objectness
+        self.objectness_decoder = net_objectness_decoder
         self.crit = crit
         self.deep_sup_scale = deep_sup_scale
         self.zero_memory = zero_memory
@@ -561,6 +563,11 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     else:
                         qread = torch.cat((qread_linear, qread), dim=1)
 
+                if self.objectness and self.objectness_decoder:
+                    feat_objectness = self.objectness(feed_dict['img_data'], return_feature_maps=True)
+                    pred_objectness = self.objectness_decoder(feat_objectness, return_softmax_noresize=True)
+                    qread = torch.cat((pred_objectness, qread), dim=1)
+
                 if self.zero_qval:
                     qval = torch.zeros_like(qval)
 
@@ -682,6 +689,11 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     qread = qread_linear
                 else:
                     qread = torch.cat((qread_linear, qread), dim=1)
+
+            if self.objectness and self.objectness_decoder:
+                feat_objectness = self.objectness(feed_dict['img_data'], return_feature_maps=True)
+                pred_objectness = self.objectness_decoder(feat_objectness, return_softmax_noresize=True)
+                qread = torch.cat((pred_objectness, qread), dim=1)
 
             if self.zero_qval:
                 qval = torch.zeros_like(qval)
@@ -1697,7 +1709,7 @@ class ASPP_Few_Shot(nn.Module):
             nn.Conv2d(fc_dim, num_class, kernel_size=1)
         )
 
-    def forward(self, conv_out, segSize=None):
+    def forward(self, conv_out, segSize=None, return_softmax_noresize=False):
         conv5 = conv_out[-1]
 
         x = self.conv1(conv5)
@@ -1709,6 +1721,10 @@ class ASPP_Few_Shot(nn.Module):
         out = torch.cat([global_feature, self.layer6_1(x), self.layer6_2(x), self.layer6_3(x), self.layer6_4(x)], dim=1)
 
         x = self.conv_last(out)
+
+        if return_softmax_noresize:
+            x = nn.functional.softmax(x, dim=1)
+            return x
 
         if self.use_softmax:  # is True during inference
             x = nn.functional.interpolate(

@@ -65,6 +65,8 @@ _C.MODEL.weights_enc_memory = ""
 _C.MODEL.weights_att_query = ""
 _C.MODEL.weights_att_memory = ""
 _C.MODEL.weights_projection = ""
+_C.MODEL.weights_objectness = ""
+_C.MODEL.weights_objectness_decoder = ""
 # number of feature channels between encoder and decoder
 _C.MODEL.encoder_dim = 1536
 _C.MODEL.fc_dim = 512

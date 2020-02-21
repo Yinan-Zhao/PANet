@@ -100,11 +100,17 @@ def main(cfg, gpus):
     print('###### Prepare data ######')
     data_name = cfg.DATASET.name
     if data_name == 'VOC':
-        from dataloaders.customized_objectness import voc_fewshot
+        if cfg.VAL.test_with_classes:
+            from dataloaders.customized import voc_fewshot
+        else:
+            from dataloaders.customized_objectness import voc_fewshot
         make_data = voc_fewshot
         max_label = 20
     elif data_name == 'COCO':
-        from dataloaders.customized_objectness import coco_fewshot
+        if cfg.VAL.test_with_classes:
+            from dataloaders.customized import coco_fewshot
+        else:
+            from dataloaders.customized_objectness import coco_fewshot
         make_data = coco_fewshot
         max_label = 80
     else:
@@ -305,6 +311,11 @@ if __name__ == '__main__':
         help="data split",
         type=str,
     )
+    parser.add_argument(
+        "--test_with_classes",
+        action='store_true',
+        help="evaluate from scratch",
+    )
 
     args = parser.parse_args()
 
@@ -322,6 +333,7 @@ if __name__ == '__main__':
     cfg.VAL.visualize = args.visualize
     cfg.VAL.n_runs = args.n_runs
     cfg.VAL.checkpoint = args.checkpoint
+    cfg.VAL.test_with_classes = args.test_with_classes
     if args.fold_idx >= 0:
         cfg.TASK.fold_idx = args.fold_idx
     # cfg.freeze()

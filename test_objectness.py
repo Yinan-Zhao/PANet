@@ -139,7 +139,6 @@ def main(cfg, gpus):
                 n_shots=cfg.TASK.n_shots,
                 n_queries=cfg.TASK.n_queries,
                 permute=cfg.VAL.permute_labels,
-                exclude_labels=[]
             )
             if data_name == 'COCO':
                 coco_cls_ids = dataset.datasets[0].dataset.coco.getCatIds()

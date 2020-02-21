@@ -34,8 +34,8 @@ TRAIN:
   workers: 4
   disp_iter: 200
   seed: 304
-  save_freq: 50000
-  eval_freq: 8000
+  save_freq: 100000
+  eval_freq: 5000
   fix_encoder: False
 
 VAL:

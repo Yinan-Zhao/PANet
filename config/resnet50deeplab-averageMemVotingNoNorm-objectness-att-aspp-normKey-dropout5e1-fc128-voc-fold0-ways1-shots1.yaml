@@ -1,0 +1,63 @@
+DATASET:
+  name: "VOC"
+  data_dir: "./data/pascal/VOCdevkit/VOC2012/"
+  data_split: "trainaug"
+  input_size: (328, 328)
+  padding_constant: 8
+  segm_downsampling_rate: 8
+
+TASK:
+  n_ways: 1
+  n_shots: 1
+  n_queries: 1
+  fold_idx: 1
+
+MODEL:
+  arch_encoder: "resnet50_deeplab"
+  arch_memory_encoder: "c1"
+  arch_attention: "attention"
+  arch_decoder: "aspp_few_shot"
+  mask_feat_downsample_rate: 1
+  att_mat_downsample_rate: 1
+  fc_dim: 256
+  encoder_dim: 1536
+  decoder_dim: 131
+  normalize_key: True
+  global_pool_read: False
+  use_dropout: True
+  dropout_rate: 0.5
+  mask_foreground: True
+  average_memory_voting: False
+  average_memory_voting_nonorm: True
+  weights_objectness: 'ckpt/resnet50deeplabobject-aspp-dropout5e1-fc256-voc-fold1-ways1-shots1/objectness_iter_best.pth'
+  weights_objectness_decoder: 'ckpt/resnet50deeplabobject-aspp-dropout5e1-fc256-voc-fold1-ways1-shots1/objectness_decoder_iter_best.pth'
+
+TRAIN:
+  n_iters: 600000
+  start_iter: 0
+  n_batch: 4
+  optim: "SGD"
+  lr_encoder: 0.02
+  lr_decoder: 0.02
+  lr_pow: 0.9
+  beta1: 0.9
+  weight_decay: 1e-4
+  deep_sup_scale: 0.4
+  fix_bn: False
+  workers: 4
+  disp_iter: 200
+  seed: 304
+  save_freq: 200000
+  eval_freq: 10000
+  permute_labels: False
+
+VAL:
+  n_runs: 3
+  visualize: False
+  checkpoint: "iter_10000.pth"
+
+TEST:
+  checkpoint: "epoch_25.pth"
+  result: "./"
+
+DIR: "ckpt/resnet50deeplab-averageMemVotingNoNorm-objectness-att-aspp-normKey-dropout5e1-fc128-voc-fold1-ways1-shots1"

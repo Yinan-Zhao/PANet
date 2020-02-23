@@ -243,7 +243,7 @@ class SegmentationModule(SegmentationModuleBase):
             return pred
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, net_projection, net_objectness, net_objectness_decoder, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, objectness_feat_downsample_rate=1., segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, average_memory_voting_nonorm=False, mask_memory_RGB=False, linear_classifier_support=False, decay_lamb=1.0, linear_classifier_support_only=False, debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, net_projection, net_objectness, net_objectness_decoder, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, objectness_feat_downsample_rate=1., segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, average_memory_voting_nonorm=False, mask_memory_RGB=False, linear_classifier_support=False, decay_lamb=1.0, linear_classifier_support_only=False, qread_only=False, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -276,6 +276,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.linear_classifier_support = linear_classifier_support
         self.decay_lamb = decay_lamb
         self.linear_classifier_support_only = linear_classifier_support_only
+        self.qread_only = qread_only
 
         self.debug = debug
 
@@ -586,6 +587,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     feature = torch.cat((qval, self.random_scale*(torch.rand_like(qread)-0.5)), dim=1)
                 else:
                     feature = torch.cat((qval, qread), dim=1)
+                if self.qread_only:
+                    feature = qread
                 pred = self.decoder([feature])
 
             loss = self.crit(pred, feed_dict['seg_label'])
@@ -718,6 +721,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 feature = torch.cat((qval, self.random_scale*(torch.rand_like(qread)-0.5)), dim=1)
             else:
                 feature = torch.cat((qval, qread), dim=1)
+            if self.qread_only:
+                feature = qread
             pred = self.decoder([feature], segSize=segSize)
 
             if self.debug:
@@ -783,6 +788,8 @@ class ModelBuilder:
         arch = arch.lower()
         if arch == 'resnet50_deeplab':
             net_encoder = ResNet50_Deeplab(pretrained=pretrained)
+        elif arch == 'resnet50_deeplab_layer4':
+            net_encoder = ResNet50_Deeplab_Objectness(pretrained=pretrained)
         else:
             raise Exception('Architecture undefined!')
 

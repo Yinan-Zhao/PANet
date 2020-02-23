@@ -75,6 +75,7 @@ _C.MODEL.fc_dim = 512
 _C.MODEL.projection_input_dim = 2048
 _C.MODEL.projection_dim = 8
 _C.MODEL.decoder_dim = 1024
+_C.MODEL.decoder_fc_dim = 256
 _C.MODEL.ppm_dim = 256
 _C.MODEL.mask_feat_downsample_rate = 1
 _C.MODEL.objectness_feat_downsample_rate = 1
@@ -99,6 +100,7 @@ _C.MODEL.linear_classifier_support_only = False
 _C.MODEL.use_dropout = False
 _C.MODEL.dropout_rate = 0.5
 _C.MODEL.decay_lamb = 1.0
+_C.MODEL.qread_only = False
 
 # -----------------------------------------------------------------------------
 # Training

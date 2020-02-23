@@ -77,6 +77,7 @@ _C.MODEL.projection_dim = 8
 _C.MODEL.decoder_dim = 1024
 _C.MODEL.ppm_dim = 256
 _C.MODEL.mask_feat_downsample_rate = 1
+_C.MODEL.objectness_feat_downsample_rate = 1
 _C.MODEL.att_mat_downsample_rate = 1
 _C.MODEL.zero_memory = False
 _C.MODEL.zero_qval = False

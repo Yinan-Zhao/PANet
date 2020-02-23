@@ -243,7 +243,7 @@ class SegmentationModule(SegmentationModuleBase):
             return pred
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, net_projection, net_objectness, net_objectness_decoder, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, average_memory_voting_nonorm=False, mask_memory_RGB=False, linear_classifier_support=False, decay_lamb=1.0, linear_classifier_support_only=False, debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, net_projection, net_objectness, net_objectness_decoder, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, objectness_feat_downsample_rate=1., segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, average_memory_voting_nonorm=False, mask_memory_RGB=False, linear_classifier_support=False, decay_lamb=1.0, linear_classifier_support_only=False, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -266,6 +266,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.memory_noLabel = memory_noLabel
         self.mask_feat_downsample_rate = mask_feat_downsample_rate
         self.att_mat_downsample_rate = att_mat_downsample_rate
+        self.objectness_feat_downsample_rate = objectness_feat_downsample_rate
         self.segm_downsampling_rate = segm_downsampling_rate
         self.mask_foreground = mask_foreground
         self.global_pool_read = global_pool_read
@@ -567,7 +568,12 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 if self.objectness and self.objectness_decoder:
                     feat_objectness = self.objectness(feed_dict['img_data'], return_feature_maps=True)
                     pred_objectness = self.objectness_decoder(feat_objectness, return_softmax_noresize=True)
-                    qread = torch.cat((pred_objectness, qread), dim=1)
+                    if self.objectness_feat_downsample_rate != 1.:
+                        pred_objectness = nn.functional.interpolate(pred_objectness, 
+                            size=(pred_objectness.shape[2]//self.objectness_feat_downsample_rate, 
+                                pred_objectness.shape[3]//self.objectness_feat_downsample_rate), 
+                            mode='bilinear')
+                    qread = torch.cat((pred_objectness[:,1:2], qread), dim=1)
 
                 if self.zero_qval:
                     qval = torch.zeros_like(qval)
@@ -694,7 +700,12 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             if self.objectness and self.objectness_decoder:
                 feat_objectness = self.objectness(feed_dict['img_data'], return_feature_maps=True)
                 pred_objectness = self.objectness_decoder(feat_objectness, return_softmax_noresize=True)
-                qread = torch.cat((pred_objectness, qread), dim=1)
+                if self.objectness_feat_downsample_rate != 1.:
+                    pred_objectness = nn.functional.interpolate(pred_objectness, 
+                        size=(pred_objectness.shape[2]//self.objectness_feat_downsample_rate, 
+                            pred_objectness.shape[3]//self.objectness_feat_downsample_rate), 
+                        mode='bilinear')
+                qread = torch.cat((pred_objectness[:,1:2], qread), dim=1)
 
             if self.zero_qval:
                 qval = torch.zeros_like(qval)

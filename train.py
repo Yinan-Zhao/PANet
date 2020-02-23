@@ -218,7 +218,7 @@ def main(cfg, gpus):
         use_dropout=cfg.MODEL.use_dropout)
 
     if cfg.MODEL.weights_objectness and cfg.MODEL.weights_objectness_decoder:
-        net_objectness = ModelBuilder.build_objectness(
+        '''net_objectness = ModelBuilder.build_objectness(
             arch='resnet50_deeplab',
             weights=cfg.MODEL.weights_objectness,
             fix_encoder=True)
@@ -230,7 +230,19 @@ def main(cfg, gpus):
             num_class=2,
             weights=cfg.MODEL.weights_objectness_decoder,
             dropout_rate=0.5,
-            use_dropout=True)
+            use_dropout=True)'''
+        net_objectness = ModelBuilder.build_objectness(
+            arch='hrnetv2',
+            weights=cfg.MODEL.weights_objectness,
+            fix_encoder=True)
+        net_objectness_decoder = ModelBuilder.build_decoder(
+            arch='c1_nodropout',
+            input_dim=720,
+            fc_dim=720,
+            ppm_dim=256,
+            num_class=2,
+            weights=cfg.MODEL.weights_objectness_decoder,
+            use_dropout=False)
         for param in net_objectness.parameters():
             param.requires_grad = False
         for param in net_objectness_decoder.parameters():
@@ -242,7 +254,7 @@ def main(cfg, gpus):
     crit = nn.NLLLoss(ignore_index=255)
 
     segmentation_module = SegmentationAttentionSeparateModule(
-        net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, net_projection, net_objectness, net_objectness_decoder, crit, zero_memory=cfg.MODEL.zero_memory, random_memory_bias=cfg.MODEL.random_memory_bias, random_memory_nobias=cfg.MODEL.random_memory_nobias, random_scale=cfg.MODEL.random_scale, zero_qval=cfg.MODEL.zero_qval, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate, segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate, mask_foreground=cfg.MODEL.mask_foreground, global_pool_read=cfg.MODEL.global_pool_read, average_memory_voting=cfg.MODEL.average_memory_voting, average_memory_voting_nonorm=cfg.MODEL.average_memory_voting_nonorm, mask_memory_RGB=cfg.MODEL.mask_memory_RGB, linear_classifier_support=cfg.MODEL.linear_classifier_support, decay_lamb=cfg.MODEL.decay_lamb, linear_classifier_support_only=cfg.MODEL.linear_classifier_support_only)
+        net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_decoder, net_projection, net_objectness, net_objectness_decoder, crit, zero_memory=cfg.MODEL.zero_memory, random_memory_bias=cfg.MODEL.random_memory_bias, random_memory_nobias=cfg.MODEL.random_memory_nobias, random_scale=cfg.MODEL.random_scale, zero_qval=cfg.MODEL.zero_qval, normalize_key=cfg.MODEL.normalize_key, p_scalar=cfg.MODEL.p_scalar, memory_feature_aggregation=cfg.MODEL.memory_feature_aggregation, memory_noLabel=cfg.MODEL.memory_noLabel, mask_feat_downsample_rate=cfg.MODEL.mask_feat_downsample_rate, att_mat_downsample_rate=cfg.MODEL.att_mat_downsample_rate, objectness_feat_downsample_rate=cfg.MODEL.objectness_feat_downsample_rate, segm_downsampling_rate=cfg.DATASET.segm_downsampling_rate, mask_foreground=cfg.MODEL.mask_foreground, global_pool_read=cfg.MODEL.global_pool_read, average_memory_voting=cfg.MODEL.average_memory_voting, average_memory_voting_nonorm=cfg.MODEL.average_memory_voting_nonorm, mask_memory_RGB=cfg.MODEL.mask_memory_RGB, linear_classifier_support=cfg.MODEL.linear_classifier_support, decay_lamb=cfg.MODEL.decay_lamb, linear_classifier_support_only=cfg.MODEL.linear_classifier_support_only)
 
 
     print('###### Load data ######')

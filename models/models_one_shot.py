@@ -1399,10 +1399,14 @@ class C1_NoDropout(nn.Module):
         # last conv
         self.conv_last = nn.Conv2d(fc_dim // 4, num_class, 1, 1, 0)
 
-    def forward(self, conv_out, segSize=None):
+    def forward(self, conv_out, segSize=None, return_softmax_noresize=False):
         conv5 = conv_out[-1]
         x = self.cbr(conv5)
         x = self.conv_last(x)
+
+        if return_softmax_noresize:
+            x = nn.functional.softmax(x, dim=1)
+            return x
 
         if self.use_softmax: # is True during inference
             x = nn.functional.interpolate(

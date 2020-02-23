@@ -112,7 +112,7 @@ def main(cfg, gpus):
         use_dropout=cfg.MODEL.use_dropout,
         use_softmax=True)
     if cfg.MODEL.weights_objectness and cfg.MODEL.weights_objectness_decoder:
-        net_objectness = ModelBuilder.build_objectness(
+        '''net_objectness = ModelBuilder.build_objectness(
             arch='resnet50_deeplab',
             weights=cfg.MODEL.weights_objectness,
             fix_encoder=True)
@@ -124,7 +124,19 @@ def main(cfg, gpus):
             num_class=2,
             weights=cfg.MODEL.weights_objectness_decoder,
             dropout_rate=0.5,
-            use_dropout=True)
+            use_dropout=True)'''
+        net_objectness = ModelBuilder.build_objectness(
+            arch='hrnetv2',
+            weights=cfg.MODEL.weights_objectness,
+            fix_encoder=True)
+        net_objectness_decoder = ModelBuilder.build_decoder(
+            arch='c1_nodropout',
+            input_dim=720,
+            fc_dim=720,
+            ppm_dim=256,
+            num_class=2,
+            weights=cfg.MODEL.weights_objectness_decoder,
+            use_dropout=False)
         for param in net_objectness.parameters():
             param.requires_grad = False
         for param in net_objectness_decoder.parameters():

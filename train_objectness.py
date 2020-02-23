@@ -142,7 +142,7 @@ def main(cfg, gpus):
     torch.cuda.set_device(gpus[0])
     print('###### Create model ######')
     net_objectness = ModelBuilder.build_objectness(
-        arch='resnet50_deeplab',
+        arch=cfg.MODEL.arch_objectness,
         weights=cfg.MODEL.weights_enc_query,
         fix_encoder=cfg.TRAIN.fix_encoder)
     net_decoder = ModelBuilder.build_decoder(

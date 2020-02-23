@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import torchvision
 import math
 import numpy as np
+from . import resnet, resnext, mobilenet, hrnet
 import time
 
 affine_par = True
@@ -792,6 +793,8 @@ class ModelBuilder:
         arch = arch.lower()
         if arch == 'resnet50_deeplab':
             net_encoder = ResNet50_Deeplab_Objectness(pretrained=pretrained)
+        elif arch == 'hrnetv2':
+            net_encoder = hrnet.__dict__['hrnetv2'](pretrained=pretrained, input_dim=3)
         else:
             raise Exception('Architecture undefined!')
 
@@ -861,6 +864,12 @@ class ModelBuilder:
                 fc_dim=fc_dim,
                 dropout_rate=dropout_rate,
                 use_dropout=use_dropout,
+                use_softmax=use_softmax)
+        elif arch == 'c1_nodropout':
+            net_decoder = C1_NoDropout(
+                num_class=num_class,
+                input_dim=input_dim,
+                fc_dim=fc_dim,
                 use_softmax=use_softmax)
         elif arch == 'ppm':
             net_decoder = PPM(
@@ -1357,6 +1366,31 @@ class C1(nn.Module):
         x = self.cbr(conv5)
         if self.use_dropout:
             x = self.dropout(x)
+        x = self.conv_last(x)
+
+        if self.use_softmax: # is True during inference
+            x = nn.functional.interpolate(
+                x, size=segSize, mode='bilinear', align_corners=False)
+            x = nn.functional.softmax(x, dim=1)
+        else:
+            x = nn.functional.log_softmax(x, dim=1)
+
+        return x
+        
+# last conv
+class C1_NoDropout(nn.Module):
+    def __init__(self, num_class=150, input_dim=1024, fc_dim=2048, use_softmax=False):
+        super(C1_NoDropout, self).__init__()
+        self.use_softmax = use_softmax
+
+        self.cbr = conv3x3_bn_relu(input_dim, fc_dim // 4, 1)
+
+        # last conv
+        self.conv_last = nn.Conv2d(fc_dim // 4, num_class, 1, 1, 0)
+
+    def forward(self, conv_out, segSize=None):
+        conv5 = conv_out[-1]
+        x = self.cbr(conv5)
         x = self.conv_last(x)
 
         if self.use_softmax: # is True during inference

@@ -22,7 +22,7 @@ MODEL:
   objectness_feat_downsample_rate: 2
   fc_dim: 512
   encoder_dim: 1536
-  decoder_dim: 130
+  decoder_dim: 258
   normalize_key: True
   global_pool_read: False
   use_dropout: True

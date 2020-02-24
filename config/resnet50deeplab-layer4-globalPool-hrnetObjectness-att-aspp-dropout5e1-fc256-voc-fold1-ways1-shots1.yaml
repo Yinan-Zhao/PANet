@@ -10,10 +10,10 @@ TASK:
   n_ways: 1
   n_shots: 1
   n_queries: 1
-  fold_idx: 0
+  fold_idx: 1
 
 MODEL:
-  arch_encoder: "resnet50_deeplab"
+  arch_encoder: "resnet50_deeplab_layer4"
   arch_memory_encoder: "c1"
   arch_attention: "attention"
   arch_decoder: "aspp_few_shot"
@@ -21,7 +21,7 @@ MODEL:
   att_mat_downsample_rate: 1
   objectness_feat_downsample_rate: 2
   fc_dim: 512
-  encoder_dim: 1536
+  encoder_dim: 2048
   decoder_dim: 513
   decoder_fc_dim: 256
   normalize_key: False
@@ -31,8 +31,8 @@ MODEL:
   mask_foreground: True
   average_memory_voting: False
   average_memory_voting_nonorm: False
-  weights_objectness: 'ckpt/hrnetv2object-c1-fc720-voc-fold0-ways1-shots1/objectness_iter_best.pth'
-  weights_objectness_decoder: 'ckpt/hrnetv2object-c1-fc720-voc-fold0-ways1-shots1/objectness_decoder_iter_best.pth'
+  weights_objectness: 'ckpt/hrnetv2object-c1-fc720-voc-fold1-ways1-shots1/objectness_iter_best.pth'
+  weights_objectness_decoder: 'ckpt/hrnetv2object-c1-fc720-voc-fold1-ways1-shots1/objectness_decoder_iter_best.pth'
 
 TRAIN:
   n_iters: 600000
@@ -63,4 +63,4 @@ TEST:
   checkpoint: "epoch_25.pth"
   result: "./"
 
-DIR: "ckpt/resnet50deeplab-globalPool-hrnetObjectness-att-aspp-dropout5e1-fc256-voc-fold0-ways1-shots1"
+DIR: "ckpt/resnet50deeplab-layer4-globalPool-hrnetObjectness-att-aspp-dropout5e1-fc256-voc-fold1-ways1-shots1"

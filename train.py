@@ -420,6 +420,8 @@ def main(cfg, gpus):
             print(f'meanIoU_binary mean: {meanIoU_binary}')
             print(f'meanIoU_binary std: {meanIoU_std_binary}')
 
+            checkpoint(nets, history, cfg, 'latest')
+
             if meanIoU > best_iou:
                 best_iou = meanIoU
                 checkpoint(nets, history, cfg, 'best')

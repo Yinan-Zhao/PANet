@@ -101,6 +101,7 @@ _C.MODEL.use_dropout = False
 _C.MODEL.dropout_rate = 0.5
 _C.MODEL.decay_lamb = 1.0
 _C.MODEL.qread_only = False
+_C.MODEL.feature_as_key = False
 
 # -----------------------------------------------------------------------------
 # Training

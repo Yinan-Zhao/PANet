@@ -243,7 +243,7 @@ class SegmentationModule(SegmentationModuleBase):
             return pred
 
 class SegmentationAttentionSeparateModule(SegmentationModuleBase):
-    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, net_projection, net_objectness, net_objectness_decoder, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, objectness_feat_downsample_rate=1., segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, average_memory_voting_nonorm=False, mask_memory_RGB=False, linear_classifier_support=False, decay_lamb=1.0, linear_classifier_support_only=False, qread_only=False, debug=False):
+    def __init__(self, net_enc_query, net_enc_memory, net_att_query, net_att_memory, net_dec, net_projection, net_objectness, net_objectness_decoder, crit, deep_sup_scale=None, zero_memory=False, random_memory_bias=False, random_memory_nobias=False, random_scale=1.0, zero_qval=False, normalize_key=False, p_scalar=40., memory_feature_aggregation=False, memory_noLabel=False, mask_feat_downsample_rate=1, att_mat_downsample_rate=1, objectness_feat_downsample_rate=1., segm_downsampling_rate=8., mask_foreground=False, global_pool_read=False, average_memory_voting=False, average_memory_voting_nonorm=False, mask_memory_RGB=False, linear_classifier_support=False, decay_lamb=1.0, linear_classifier_support_only=False, qread_only=False, feature_as_key=False, debug=False):
         super(SegmentationAttentionSeparateModule, self).__init__()
         self.encoder_query = net_enc_query
         self.encoder_memory = net_enc_memory
@@ -277,6 +277,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         self.decay_lamb = decay_lamb
         self.linear_classifier_support_only = linear_classifier_support_only
         self.qread_only = qread_only
+        self.feature_as_key = feature_as_key
 
         self.debug = debug
 
@@ -501,6 +502,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 else:
                     mmask = torch.ones_like(mkey)[:,0:1] > 0.
 
+                if self.feature_as_key:
+                    qkey = feature_enc
+                    mkey = feature_memory
+
                 if self.normalize_key:
                     qkey = F.normalize(qkey, p=2, dim=1)
                     mkey = F.normalize(mkey, p=2, dim=1)
@@ -634,6 +639,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 mmask = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=self.segm_downsampling_rate, mode='nearest') > 0.5
             else:
                 mmask = torch.ones_like(mkey)[:,0:1] > 0.
+
+            if self.feature_as_key:
+                qkey = feature_enc
+                mkey = feature_memory
 
             if self.normalize_key:
                 qkey = F.normalize(qkey, p=2, dim=1)

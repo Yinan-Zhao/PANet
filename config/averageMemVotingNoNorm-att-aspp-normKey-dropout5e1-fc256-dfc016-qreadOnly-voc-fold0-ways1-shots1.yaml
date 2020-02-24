@@ -49,11 +49,11 @@ TRAIN:
   disp_iter: 200
   seed: 304
   save_freq: 200000
-  eval_freq: 1000
+  eval_freq: 10000
   permute_labels: False
 
 VAL:
-  n_runs: 1
+  n_runs: 3
   visualize: False
   checkpoint: "iter_10000.pth"
 

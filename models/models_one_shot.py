@@ -503,8 +503,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     mmask = torch.ones_like(mkey)[:,0:1] > 0.
 
                 if self.feature_as_key:
-                    qkey = feature_enc
-                    mkey = feature_memory
+                    qkey = feature_enc[-1]
+                    mkey = feature_memory[-1]
 
                 if self.normalize_key:
                     qkey = F.normalize(qkey, p=2, dim=1)
@@ -641,8 +641,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 mmask = torch.ones_like(mkey)[:,0:1] > 0.
 
             if self.feature_as_key:
-                qkey = feature_enc
-                mkey = feature_memory
+                qkey = feature_enc[-1]
+                mkey = feature_memory[-1]
 
             if self.normalize_key:
                 qkey = F.normalize(qkey, p=2, dim=1)

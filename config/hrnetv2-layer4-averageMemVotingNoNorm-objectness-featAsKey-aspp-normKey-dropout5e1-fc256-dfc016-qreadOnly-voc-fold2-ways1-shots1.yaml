@@ -13,7 +13,8 @@ TASK:
   fold_idx: 2
 
 MODEL:
-  arch_encoder: "resnet50_deeplab_layer4"
+  #arch_encoder: "resnet50_deeplab_layer4"
+  arch_encoder: "resnet50_deeplab"
   arch_memory_encoder: "c1"
   arch_attention: "attention"
   arch_decoder: "aspp_few_shot"

@@ -111,12 +111,22 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
                     for j in range(cnt_query[i])]
     query_images_t = [paired_sample[cumsum_idx[i+1] - j - 1]['image_t'] for i in range(n_ways)
                       for j in range(cnt_query[i])]
+    query_images_noresize = [paired_sample[cumsum_idx[i+1] - j - 1]['image_noresize'] for i in range(n_ways)
+                    for j in range(cnt_query[i])]
     if coco:
         query_labels = [paired_sample[cumsum_idx[i+1] - j - 1]['label'][class_ids[i]]
                         for i in range(n_ways) for j in range(cnt_query[i])]
     else:
         query_labels = [paired_sample[cumsum_idx[i+1] - j - 1]['label'] for i in range(n_ways)
                         for j in range(cnt_query[i])]
+
+    if coco:
+        query_labels_noresize = [paired_sample[cumsum_idx[i+1] - j - 1]['label_noresize'][class_ids[i]]
+                        for i in range(n_ways) for j in range(cnt_query[i])]
+    else:
+        query_labels_noresize = [paired_sample[cumsum_idx[i+1] - j - 1]['label_noresize'] for i in range(n_ways)
+                        for j in range(cnt_query[i])]
+
     query_cls_idx = [sorted([0,] + [class_ids.index(x) + 1
                                     for x in set(np.unique(query_label)) & set(class_ids)])
                      for query_label in query_labels]
@@ -132,6 +142,10 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
     query_labels_tmp = [torch.zeros_like(x) for x in query_labels]
     for i, query_label_tmp in enumerate(query_labels_tmp):
         query_label_tmp[query_labels[i] != 0] = 1
+
+    query_labels_noresize_tmp = [torch.zeros_like(x) for x in query_labels_noresize]
+    for i, query_label_noresize_tmp in enumerate(query_labels_noresize_tmp):
+        query_label_noresize_tmp[query_labels_noresize[i] != 0] = 1
         
     support_labels_tmp = [[torch.zeros_like(support_labels[way][shot]) 
                         for shot in range(n_shots)] for way in range(n_ways)]
@@ -169,7 +183,9 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
             'query_ids': query_ids,
             'query_images_t': query_images_t,
             'query_images': query_images,
+            'query_images_noresize': query_images_noresize,
             'query_labels': query_labels_tmp,
+            'query_labels_noresize': query_labels_noresize_tmp,
             'query_masks': query_masks,
             'query_cls_idx': query_cls_idx,
            }

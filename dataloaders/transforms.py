@@ -15,17 +15,21 @@ class RandomMirror(object):
     Randomly filp the images/masks horizontally
     """
     def __call__(self, sample):
-        img, label = sample['image'], sample['label']
+        img, label, label_noresize = sample['image'], sample['label'], sample['label_noresize']
         if random.random() < 0.5:
             img = img.transpose(Image.FLIP_LEFT_RIGHT)
             if isinstance(label, dict):
                 label = {catId: x.transpose(Image.FLIP_LEFT_RIGHT)
                          for catId, x in label.items()}
+                label_noresize = {catId: x.transpose(Image.FLIP_LEFT_RIGHT)
+                         for catId, x in label_noresize.items()}
             else:
                 label = label.transpose(Image.FLIP_LEFT_RIGHT)
+                label_noresize = label_noresize.transpose(Image.FLIP_LEFT_RIGHT)
 
         sample['image'] = img
         sample['label'] = label
+        sample['label_noresize'] = label_noresize
         return sample
 
 class Resize(object):
@@ -57,16 +61,20 @@ class ToTensorNormalize(object):
     Scale images' pixel values to [0-1] and normalize with predefined statistics
     """
     def __call__(self, sample):
-        img, label = sample['image'], sample['label']
+        img, label, label_noresize = sample['image'], sample['label'], sample['label_noresize']
         img = tr_F.to_tensor(img)
         img = tr_F.normalize(img, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         if isinstance(label, dict):
             label = {catId: torch.Tensor(np.array(x)).long()
                      for catId, x in label.items()}
+            label_noresize = {catId: torch.Tensor(np.array(x)).long()
+                     for catId, x in label_noresize.items()}
         else:
             label = torch.Tensor(np.array(label)).long()
+            label_noresize = torch.Tensor(np.array(label_noresize)).long()
 
         sample['image'] = img
         sample['label'] = label
+        sample['label_noresize'] = label_noresize
 
         return sample

@@ -117,6 +117,14 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
     else:
         query_labels = [paired_sample[cumsum_idx[i+1] - j - 1]['label'] for i in range(n_ways)
                         for j in range(cnt_query[i])]
+
+    if coco:
+        query_labels_noresize = [paired_sample[cumsum_idx[i+1] - j - 1]['label_noresize'][class_ids[i]]
+                        for i in range(n_ways) for j in range(cnt_query[i])]
+    else:
+        query_labels_noresize = [paired_sample[cumsum_idx[i+1] - j - 1]['label_noresize'] for i in range(n_ways)
+                        for j in range(cnt_query[i])]
+
     query_cls_idx = [sorted([0,] + [class_ids.index(x) + 1
                                     for x in set(np.unique(query_label)) & set(class_ids)])
                      for query_label in query_labels]
@@ -134,6 +142,12 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
         query_label_tmp[query_labels[i] == 255] = 255
         for j in range(n_ways):
             query_label_tmp[query_labels[i] == class_ids[j]] = int(perm_mapping[j+1])
+
+    query_labels_noresize_tmp = [torch.tensor(perm_mapping[0]).long()+torch.zeros_like(x) for x in query_labels_noresize]
+    for i, query_label_noresize_tmp in enumerate(query_labels_noresize_tmp):
+        query_label_noresize_tmp[query_labels_noresize[i] == 255] = 255
+        for j in range(n_ways):
+            query_label_noresize_tmp[query_labels_noresize[i] == class_ids[j]] = int(perm_mapping[j+1])
 
     support_labels_tmp = [[torch.tensor(perm_mapping[0]).long()+torch.zeros_like(support_labels[way][shot]) 
                         for shot in range(n_shots)] for way in range(n_ways)]
@@ -174,6 +188,7 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
             'query_images_t': query_images_t,
             'query_images': query_images,
             'query_labels': query_labels_tmp,
+            'query_labels_noresize': query_labels_noresize_tmp,
             'query_masks': query_masks,
             'query_cls_idx': query_cls_idx,
            }
@@ -233,7 +248,7 @@ def voc_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots,
     for sub_list in sub_ids:
         after_count += len(sub_list)
     print('the number of training images after excluding: %d' % (after_count))
-    
+
     # Create sub-datasets and add class_id attribute
     subsets = voc.subsets(sub_ids, [{'basic': {'class_id': cls_id}} for cls_id in labels])
 

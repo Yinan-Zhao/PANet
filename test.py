@@ -47,6 +47,7 @@ def data_preprocess(sample_batched, cfg):
     feed_dict = {}
     feed_dict['img_data'] = sample_batched['query_images'][0].cuda()
     feed_dict['seg_label'] = sample_batched['query_labels'][0].cuda()
+    feed_dict['seg_label_noresize'] = sample_batched['query_labels_noresize'][0].cuda()
 
     n_ways = cfg.TASK.n_ways
     n_shots = cfg.TASK.n_shots
@@ -232,6 +233,8 @@ def main(cfg, gpus):
                         #np.save('debug/feature_memory-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), feature_memory[-1].detach().cpu().float().numpy())
                 else:
                     query_pred = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
+
+                print(feed_dict['seg_label_noresize'][0].cpu().shape)
 
                 metric.record(np.array(query_pred.argmax(dim=1)[0].cpu()),
                               np.array(feed_dict['seg_label'][0].cpu()),

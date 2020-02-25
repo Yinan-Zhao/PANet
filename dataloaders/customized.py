@@ -180,7 +180,7 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
 
 
 def voc_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots, max_iters,
-                n_queries=1, permute=False):
+                n_queries=1, permute=False, exclude_labels=[]):
     """
     Args:
         base_dir:
@@ -212,6 +212,28 @@ def voc_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots,
         with open(os.path.join(voc._id_dir, voc.split,
                                'class{}.txt'.format(label)), 'r') as f:
             sub_ids.append(f.read().splitlines())
+
+    total_count = 0
+    for sub_list in sub_ids:
+        total_count += len(sub_list)
+    print('the number of training images before excluding: %d' % (total_count))
+
+    exclude_sub_ids = []
+    for label in exclude_labels:
+        with open(os.path.join(voc._id_dir, voc.split,
+                               'class{}.txt'.format(label)), 'r') as f:
+            exclude_sub_ids += f.read().splitlines()
+
+    for sub_ids_item in sub_ids:
+        for id_item in sub_ids_item:
+            if id_item in exclude_sub_ids:
+                sub_ids_item.remove(id_item)
+
+    after_count = 0
+    for sub_list in sub_ids:
+        after_count += len(sub_list)
+    print('the number of training images after excluding: %d' % (after_count))
+    
     # Create sub-datasets and add class_id attribute
     subsets = voc.subsets(sub_ids, [{'basic': {'class_id': cls_id}} for cls_id in labels])
 

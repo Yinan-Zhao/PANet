@@ -32,6 +32,7 @@ _C.DATASET.zero_input_rgb = False
 _C.DATASET.zero_input_seg = False
 _C.DATASET.random_input_seg = False
 _C.DATASET.RGB_mask_combine_val = False
+_C.DATASET.exclude_labels = False
 
 # -----------------------------------------------------------------------------
 # Task

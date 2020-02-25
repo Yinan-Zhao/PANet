@@ -271,6 +271,10 @@ def main(cfg, gpus):
         raise ValueError('Wrong config for dataset!')
     labels = CLASS_LABELS[data_name][cfg.TASK.fold_idx]
     labels_val = CLASS_LABELS[data_name]['all'] - CLASS_LABELS[data_name][cfg.TASK.fold_idx]
+    if cfg.DATASET.exclude_labels:
+        exclude_labels = labels_val
+    else:
+        exclude_labels = []
     transforms = Compose([Resize(size=cfg.DATASET.input_size),
                           RandomMirror()])
     dataset = make_data(
@@ -283,7 +287,8 @@ def main(cfg, gpus):
         n_ways=cfg.TASK.n_ways,
         n_shots=cfg.TASK.n_shots,
         n_queries=cfg.TASK.n_queries,
-        permute=cfg.TRAIN.permute_labels
+        permute=cfg.TRAIN.permute_labels,
+        exclude_labels=exclude_labels
     )
     trainloader = DataLoader(
         dataset,
@@ -386,7 +391,8 @@ def main(cfg, gpus):
                         n_ways=cfg.TASK.n_ways,
                         n_shots=cfg.TASK.n_shots,
                         n_queries=cfg.TASK.n_queries,
-                        permute=cfg.VAL.permute_labels
+                        permute=cfg.VAL.permute_labels,
+                        exclude_labels=[]
                     )
                     if data_name == 'COCO':
                         coco_cls_ids = dataset_val.datasets[0].dataset.coco.getCatIds()

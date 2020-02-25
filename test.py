@@ -46,6 +46,7 @@ def visualize_result(data, pred, dir_result):
 def data_preprocess(sample_batched, cfg):
     feed_dict = {}
     feed_dict['img_data'] = sample_batched['query_images'][0].cuda()
+    feed_dict['img_data_noresize'] = sample_batched['query_images_noresize'][0].cuda()
     feed_dict['seg_label'] = sample_batched['query_labels'][0].cuda()
     feed_dict['seg_label_noresize'] = sample_batched['query_labels_noresize'][0].cuda()
 
@@ -246,9 +247,9 @@ def main(cfg, gpus):
                     query_name = sample_batched['query_ids'][0][0]
                     support_name = sample_batched['support_ids'][0][0][0]
                     img = imread(os.path.join(cfg.DATASET.data_dir, 'JPEGImages', query_name+'.jpg'))
-                    img = imresize(img, cfg.DATASET.input_size)
+                    #img = imresize(img, cfg.DATASET.input_size)
                     visualize_result(
-                        (img, as_numpy(feed_dict['seg_label'][0].cpu()), '%05d'%(count)),
+                        (img, as_numpy(feed_dict['seg_label_noresize'][0].cpu()), '%05d'%(count)),
                         as_numpy(np.array(query_pred.argmax(dim=1)[0].cpu())),
                         os.path.join(cfg.DIR, 'result')
                     )

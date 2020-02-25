@@ -15,9 +15,10 @@ class RandomMirror(object):
     Randomly filp the images/masks horizontally
     """
     def __call__(self, sample):
-        img, label, label_noresize = sample['image'], sample['label'], sample['label_noresize']
+        img, img_noresize, label, label_noresize = sample['image'], sample['image_noresize'], sample['label'], sample['label_noresize']
         if random.random() < 0.5:
             img = img.transpose(Image.FLIP_LEFT_RIGHT)
+            img_noresize = img_noresize.transpose(Image.FLIP_LEFT_RIGHT)
             if isinstance(label, dict):
                 label = {catId: x.transpose(Image.FLIP_LEFT_RIGHT)
                          for catId, x in label.items()}
@@ -28,6 +29,7 @@ class RandomMirror(object):
                 label_noresize = label_noresize.transpose(Image.FLIP_LEFT_RIGHT)
 
         sample['image'] = img
+        sample['image_noresize'] = img_noresize
         sample['label'] = label
         sample['label_noresize'] = label_noresize
         return sample
@@ -61,9 +63,11 @@ class ToTensorNormalize(object):
     Scale images' pixel values to [0-1] and normalize with predefined statistics
     """
     def __call__(self, sample):
-        img, label, label_noresize = sample['image'], sample['label'], sample['label_noresize']
+        img, img_noresize, label, label_noresize = sample['image'], sample['image_noresize'], sample['label'], sample['label_noresize']
         img = tr_F.to_tensor(img)
         img = tr_F.normalize(img, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        img_noresize = tr_F.to_tensor(img_noresize)
+        img_noresize = tr_F.normalize(img_noresize, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         if isinstance(label, dict):
             label = {catId: torch.Tensor(np.array(x)).long()
                      for catId, x in label.items()}
@@ -74,6 +78,7 @@ class ToTensorNormalize(object):
             label_noresize = torch.Tensor(np.array(label_noresize)).long()
 
         sample['image'] = img
+        sample['image_noresize'] = img_noresize
         sample['label'] = label
         sample['label_noresize'] = label_noresize
 

@@ -111,6 +111,8 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
                     for j in range(cnt_query[i])]
     query_images_t = [paired_sample[cumsum_idx[i+1] - j - 1]['image_t'] for i in range(n_ways)
                       for j in range(cnt_query[i])]
+    query_images_noresize = [paired_sample[cumsum_idx[i+1] - j - 1]['image_noresize'] for i in range(n_ways)
+                    for j in range(cnt_query[i])]
     if coco:
         query_labels = [paired_sample[cumsum_idx[i+1] - j - 1]['label'][class_ids[i]]
                         for i in range(n_ways) for j in range(cnt_query[i])]
@@ -187,6 +189,7 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
             'query_ids': query_ids,
             'query_images_t': query_images_t,
             'query_images': query_images,
+            'query_images_noresize': query_images_noresize,
             'query_labels': query_labels_tmp,
             'query_labels_noresize': query_labels_noresize_tmp,
             'query_masks': query_masks,

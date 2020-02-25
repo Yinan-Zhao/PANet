@@ -232,12 +232,12 @@ def main(cfg, gpus):
                         #np.save('debug/feature_enc-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), feature_enc[-1].detach().cpu().float().numpy())
                         #np.save('debug/feature_memory-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), feature_memory[-1].detach().cpu().float().numpy())
                 else:
-                    query_pred = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
-
-                print(feed_dict['seg_label_noresize'][0].cpu().shape)
+                    #query_pred = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
+                    query_pred = segmentation_module(feed_dict, segSize=(feed_dict['seg_label_noresize'].shape[1], feed_dict['seg_label_noresize'].shape[2]))
+                    print(query_pred.shape)
 
                 metric.record(np.array(query_pred.argmax(dim=1)[0].cpu()),
-                              np.array(feed_dict['seg_label'][0].cpu()),
+                              np.array(feed_dict['seg_label_noresize'][0].cpu()),
                               labels=label_ids, n_run=run)
 
                 if cfg.VAL.visualize:

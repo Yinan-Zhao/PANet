@@ -14,7 +14,7 @@ TASK:
   fold_idx: 0
 
 MODEL:
-  arch_encoder: "resnet101"
+  arch_encoder: "resnet101_deeplab"
   arch_memory_encoder: "c1"
   arch_attention: "attention"
   arch_decoder: "aspp_few_shot"
@@ -65,4 +65,4 @@ TEST:
   checkpoint: "epoch_25.pth"
   result: "./"
 
-DIR: "ckpt/resnet101-excludeLabels-globalPool-hrnetObjectness-att-aspp-dropout5e1-fc256-voc-fold0-ways1-shots5"
+DIR: "ckpt/resnet101deeplab-excludeLabels-globalPool-hrnetObjectness-att-aspp-dropout5e1-fc256-voc-fold0-ways1-shots5"

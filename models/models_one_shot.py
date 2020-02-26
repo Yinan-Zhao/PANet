@@ -187,11 +187,31 @@ def load_resnet50_param(model, stop_layer='layer4'):
     model.load_state_dict(new_params)
     return model
 
+def load_resnet101_param(model, stop_layer='layer4'):
+    resnet101 = torchvision.models.resnet101(pretrained=True)
+    saved_state_dict = resnet101.state_dict()
+    new_params = model.state_dict().copy()
+    # copy params from resnet50, except layers after stop_layer
+    for i in saved_state_dict:  
+        i_parts = i.split('.')
+        if not i_parts[0] == stop_layer:
+            new_params['.'.join(i_parts)] = saved_state_dict[i]
+        else:
+            break
+    model.load_state_dict(new_params)
+    return model
+
 
 def ResNet50_Deeplab(pretrained=True, **kwargs):
     model = ResNet_Deeplab(Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
         model=load_resnet50_param(model)
+    return model
+
+def ResNet101_Deeplab(pretrained=True, **kwargs):
+    model = ResNet_Deeplab(Bottleneck, [3, 4, 23, 3], **kwargs)
+    if pretrained:
+        model=load_resnet101_param(model)
     return model
 
 def ResNet50_Deeplab_Objectness(pretrained=True, **kwargs):
@@ -824,6 +844,8 @@ class ModelBuilder:
         arch = arch.lower()
         if arch == 'resnet50_deeplab':
             net_encoder = ResNet50_Deeplab(pretrained=pretrained)
+        elif arch == 'resnet101_deeplab':
+            net_encoder = ResNet101_Deeplab(pretrained=pretrained)
         elif arch == 'resnet50_deeplab_layer4':
             net_encoder = ResNet50_Deeplab_Objectness(pretrained=pretrained)
         elif arch == 'resnet101':
@@ -1094,6 +1116,7 @@ class Resnet_middle(nn.Module):
             size=(x.shape[-2], x.shape[-1]), 
             mode='bilinear')
         x = torch.cat([layer2_downsample,conv_out[-1]],dim=1)
+
 
         if return_feature_maps:
             return [x]

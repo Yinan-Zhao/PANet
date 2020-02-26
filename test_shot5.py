@@ -214,7 +214,6 @@ def main(cfg, gpus):
                 ref_num = feed_dict['img_refs_rgb'].shape[2]
 
                 for k in range(ref_num):
-                    print(k)
                     feed_dict['img_refs_rgb'] = refs_tmp[:,:,k:k+1,:,:]
                     feed_dict['img_refs_mask'] = masks_tmp[:,:,k:k+1,:,:]
                     if cfg.eval_att_voting or cfg.is_debug:

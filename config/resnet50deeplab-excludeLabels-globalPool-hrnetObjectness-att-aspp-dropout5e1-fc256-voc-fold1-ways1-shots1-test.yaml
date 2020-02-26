@@ -11,7 +11,7 @@ TASK:
   n_ways: 1
   n_shots: 5
   n_queries: 1
-  fold_idx: 0
+  fold_idx: 1
 
 MODEL:
   arch_encoder: "resnet50_deeplab"
@@ -32,8 +32,8 @@ MODEL:
   mask_foreground: True
   average_memory_voting: False
   average_memory_voting_nonorm: False
-  weights_objectness: 'ckpt/hrnetv2object-c1-fc720-voc-fold0-ways1-shots1/objectness_iter_best.pth'
-  weights_objectness_decoder: 'ckpt/hrnetv2object-c1-fc720-voc-fold0-ways1-shots1/objectness_decoder_iter_best.pth'
+  weights_objectness: 'ckpt/hrnetv2object-c1-fc720-voc-fold1-ways1-shots1/objectness_iter_best.pth'
+  weights_objectness_decoder: 'ckpt/hrnetv2object-c1-fc720-voc-fold1-ways1-shots1/objectness_decoder_iter_best.pth'
 
 TRAIN:
   n_iters: 600000
@@ -64,4 +64,4 @@ TEST:
   checkpoint: "epoch_25.pth"
   result: "./"
 
-DIR: "ckpt/old/resnet50deeplab-excludeLabels-globalPool-hrnetObjectness-att-aspp-dropout5e1-fc256-voc-fold0-ways1-shots1"
+DIR: "ckpt/old/resnet50deeplab-excludeLabels-globalPool-hrnetObjectness-att-aspp-dropout5e1-fc256-voc-fold1-ways1-shots1"

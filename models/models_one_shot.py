@@ -552,13 +552,19 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
                 if self.global_pool_read:
                     support_mask = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=self.segm_downsampling_rate, mode='nearest')
-                    support_mask = support_mask[:,:,0,:,:]
-                    h,w = mval_rgb.shape[-2], mval_rgb.shape[-1]
+                    for p in range(support_mask.shape[2]):
+                        support_mask = support_mask[:,:,p,:,:]
+                        h,w = mval_rgb.shape[-2], mval_rgb.shape[-1]
 
-                    area = F.avg_pool2d(support_mask, mval_rgb.shape[-2:]) * h * w + 0.0005
-                    z = support_mask * mval_rgb[:,:,0,:,:]
-                    z = F.avg_pool2d(input=z,
-                                     kernel_size=mval_rgb.shape[-2:]) * h * w / area
+                        area = F.avg_pool2d(support_mask, mval_rgb.shape[-2:]) * h * w + 0.0005
+                        z = support_mask * mval_rgb[:,:,p,:,:]
+                        z = F.avg_pool2d(input=z,
+                                         kernel_size=mval_rgb.shape[-2:]) * h * w / area
+                        if p == 0:
+                            z_final = z
+                        else:
+                            z_final += z
+                    z = z_final / support_mask.shape[2]
                     qread = z.expand(-1, -1, mval_rgb.shape[-2], mval_rgb.shape[-1])  # tile for cat
 
                 if self.linear_classifier_support:
@@ -696,13 +702,19 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
             if self.global_pool_read:
                 support_mask = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=self.segm_downsampling_rate, mode='nearest')
-                support_mask = support_mask[:,:,0,:,:]
-                h,w = mval_rgb.shape[-2], mval_rgb.shape[-1]
+                for p in range(support_mask.shape[2]):
+                    support_mask = support_mask[:,:,p,:,:]
+                    h,w = mval_rgb.shape[-2], mval_rgb.shape[-1]
 
-                area = F.avg_pool2d(support_mask, mval_rgb.shape[-2:]) * h * w + 0.0005
-                z = support_mask * mval_rgb[:,:,0,:,:]
-                z = F.avg_pool2d(input=z,
-                                 kernel_size=mval_rgb.shape[-2:]) * h * w / area
+                    area = F.avg_pool2d(support_mask, mval_rgb.shape[-2:]) * h * w + 0.0005
+                    z = support_mask * mval_rgb[:,:,p,:,:]
+                    z = F.avg_pool2d(input=z,
+                                     kernel_size=mval_rgb.shape[-2:]) * h * w / area
+                    if p == 0:
+                        z_final = z
+                    else:
+                        z_final += z
+                z = z_final / support_mask.shape[2]
                 qread = z.expand(-1, -1, mval_rgb.shape[-2], mval_rgb.shape[-1])  # tile for cat
 
             if self.linear_classifier_support:

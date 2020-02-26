@@ -203,7 +203,7 @@ def main(cfg, gpus):
             count = 0
 
             if cfg.multi_scale_test:
-                scales = [224, 328, 426]
+                scales = [224, 328, 424]
             else:
                 scales = [328]
 

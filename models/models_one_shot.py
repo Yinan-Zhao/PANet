@@ -565,7 +565,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                         else:
                             z_final += z
                     z = z_final / support_mask.shape[2]
-                    qread = z.expand(-1, -1, mval_rgb.shape[-2], mval_rgb.shape[-1])  # tile for cat
+                    #qread = z.expand(-1, -1, mval_rgb.shape[-2], mval_rgb.shape[-1])  # tile for cat
+                    qread = z.expand(-1, -1, qval.shape[-2], qval.shape[-1])
 
                 if self.linear_classifier_support:
                     output_linear_shape = (qval.shape[0], 1, qval.shape[2], qval.shape[3])
@@ -715,7 +716,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     else:
                         z_final += z
                 z = z_final / support_mask.shape[2]
-                qread = z.expand(-1, -1, mval_rgb.shape[-2], mval_rgb.shape[-1])  # tile for cat
+                #qread = z.expand(-1, -1, mval_rgb.shape[-2], mval_rgb.shape[-1])  # tile for cat
+                qread = z.expand(-1, -1, qval.shape[-2], qval.shape[-1])
 
             if self.linear_classifier_support:
                 output_linear_shape = (qval.shape[0], 1, qval.shape[2], qval.shape[3])

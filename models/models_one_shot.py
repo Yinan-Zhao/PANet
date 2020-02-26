@@ -826,6 +826,9 @@ class ModelBuilder:
             net_encoder = ResNet50_Deeplab(pretrained=pretrained)
         elif arch == 'resnet50_deeplab_layer4':
             net_encoder = ResNet50_Deeplab_Objectness(pretrained=pretrained)
+        elif arch == 'resnet101':
+            orig_resnet = resnet.__dict__['resnet101'](pretrained=pretrained)
+            net_encoder = Resnet_middle(orig_resnet)
         else:
             raise Exception('Architecture undefined!')
 
@@ -1052,6 +1055,45 @@ class Resnet(nn.Module):
         x = self.layer2(x); conv_out.append(x);
         x = self.layer3(x); conv_out.append(x);
         x = torch.cat([conv_out[-2],conv_out[-1]],dim=1)
+
+        if return_feature_maps:
+            return conv_out
+        return [x]
+
+class Resnet_middle(nn.Module):
+    def __init__(self, orig_resnet):
+        super(Resnet_middle, self).__init__()
+
+        # take pretrained resnet, except AvgPool and FC
+        self.conv1 = orig_resnet.conv1
+        self.bn1 = orig_resnet.bn1
+        self.relu1 = orig_resnet.relu1
+        self.conv2 = orig_resnet.conv2
+        self.bn2 = orig_resnet.bn2
+        self.relu2 = orig_resnet.relu2
+        self.conv3 = orig_resnet.conv3
+        self.bn3 = orig_resnet.bn3
+        self.relu3 = orig_resnet.relu3
+        self.maxpool = orig_resnet.maxpool
+        self.layer1 = orig_resnet.layer1
+        self.layer2 = orig_resnet.layer2
+        self.layer3 = orig_resnet.layer3
+
+    def forward(self, x, return_feature_maps=False):
+        conv_out = []
+
+        x = self.relu1(self.bn1(self.conv1(x)))
+        x = self.relu2(self.bn2(self.conv2(x)))
+        x = self.relu3(self.bn3(self.conv3(x)))
+        x = self.maxpool(x)
+
+        x = self.layer1(x); conv_out.append(x);
+        x = self.layer2(x); conv_out.append(x);
+        x = self.layer3(x); conv_out.append(x);
+        layer2_downsample = nn.functional.interpolate(conv_out[-2], 
+            size=(conv_out[-2].shape[-2]//2, conv_out[-2].shape[-1]//2), 
+            mode='bilinear')
+        x = torch.cat([layer2_downsample,conv_out[-1]],dim=1)
 
         if return_feature_maps:
             return conv_out

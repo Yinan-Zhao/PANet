@@ -215,7 +215,6 @@ def main(cfg, gpus):
                     label_ids = list(sample_batched['class_ids'])
 
                 for q, scale in enumerate(scales):
-                    print(scale)
                     if len(scales) > 1:
                         feed_dict['img_data'] = nn.functional.interpolate(feed_dict['img_data'].cuda(), size=(scale, scale), mode='bilinear')
                     if cfg.eval_att_voting or cfg.is_debug:

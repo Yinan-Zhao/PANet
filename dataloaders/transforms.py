@@ -45,6 +45,35 @@ class Resize(object):
         self.size = size
 
     def __call__(self, sample):
+        img, img_noresize, label, label_noresize = sample['image'], sample['image_noresize'], sample['label'], sample['label_noresize']
+        img = tr_F.resize(img, self.size)
+        img_noresize = tr_F.resize(img_noresize, self.size)
+        if isinstance(label, dict):
+            label = {catId: tr_F.resize(x, self.size, interpolation=Image.NEAREST)
+                     for catId, x in label.items()}
+            label_noresize = {catId: tr_F.resize(x, self.size, interpolation=Image.NEAREST)
+                     for catId, x in label_noresize.items()}
+        else:
+            label = tr_F.resize(label, self.size, interpolation=Image.NEAREST)
+            label_noresize = tr_F.resize(label_noresize, self.size, interpolation=Image.NEAREST)
+
+        sample['image'] = img
+        sample['image_noresize'] = img_noresize
+        sample['label'] = label
+        sample['label_noresize'] = label_noresize
+        return sample
+
+class Resize_test(object):
+    """
+    Resize images/masks to given size
+
+    Args:
+        size: output size
+    """
+    def __init__(self, size):
+        self.size = size
+
+    def __call__(self, sample):
         img, label = sample['image'], sample['label']
         img = tr_F.resize(img, self.size)
         if isinstance(label, dict):

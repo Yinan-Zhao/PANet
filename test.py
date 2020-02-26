@@ -21,7 +21,7 @@ from utils_seg import AverageMeter, colorEncodeGray, accuracy, intersectionAndUn
 
 #from dataloaders.customized import voc_fewshot, coco_fewshot
 from dataloaders.transforms import ToTensorNormalize
-from dataloaders.transforms import Resize
+from dataloaders.transforms import Resize, Resize_test
 from util.metric import Metric
 from util.utils import set_seed, CLASS_LABELS, get_bbox
 from lib.utils import as_numpy
@@ -169,7 +169,7 @@ def main(cfg, gpus):
     else:
         raise ValueError('Wrong config for dataset!')
     labels = CLASS_LABELS[data_name]['all'] - CLASS_LABELS[data_name][cfg.TASK.fold_idx]
-    transforms = [Resize(size=cfg.DATASET.input_size)]
+    transforms = [Resize_test(size=cfg.DATASET.input_size)]
     transforms = Compose(transforms)
 
 

@@ -553,11 +553,11 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 if self.global_pool_read:
                     support_mask = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=self.segm_downsampling_rate, mode='nearest')
                     for p in range(support_mask.shape[2]):
-                        support_mask = support_mask[:,:,p,:,:]
+                        support_mask_slice = support_mask[:,:,p,:,:]
                         h,w = mval_rgb.shape[-2], mval_rgb.shape[-1]
 
-                        area = F.avg_pool2d(support_mask, mval_rgb.shape[-2:]) * h * w + 0.0005
-                        z = support_mask * mval_rgb[:,:,p,:,:]
+                        area = F.avg_pool2d(support_mask_slice, mval_rgb.shape[-2:]) * h * w + 0.0005
+                        z = support_mask_slice * mval_rgb[:,:,p,:,:]
                         z = F.avg_pool2d(input=z,
                                          kernel_size=mval_rgb.shape[-2:]) * h * w / area
                         if p == 0:
@@ -703,11 +703,11 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             if self.global_pool_read:
                 support_mask = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=self.segm_downsampling_rate, mode='nearest')
                 for p in range(support_mask.shape[2]):
-                    support_mask = support_mask[:,:,p,:,:]
+                    support_mask_slice = support_mask[:,:,p,:,:]
                     h,w = mval_rgb.shape[-2], mval_rgb.shape[-1]
 
-                    area = F.avg_pool2d(support_mask, mval_rgb.shape[-2:]) * h * w + 0.0005
-                    z = support_mask * mval_rgb[:,:,p,:,:]
+                    area = F.avg_pool2d(support_mask_slice, mval_rgb.shape[-2:]) * h * w + 0.0005
+                    z = support_mask_slice * mval_rgb[:,:,p,:,:]
                     z = F.avg_pool2d(input=z,
                                      kernel_size=mval_rgb.shape[-2:]) * h * w / area
                     if p == 0:

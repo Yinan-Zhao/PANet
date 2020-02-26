@@ -1096,8 +1096,9 @@ class Resnet_middle(nn.Module):
         x = torch.cat([layer2_downsample,conv_out[-1]],dim=1)
 
         if return_feature_maps:
-            return conv_out
-        return [x]
+            return [x]
+        else:
+            return x
 
 class ResnetDilated(nn.Module):
     def __init__(self, orig_resnet, dilate_scale=8):

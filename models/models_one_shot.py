@@ -1091,7 +1091,7 @@ class Resnet_middle(nn.Module):
         x = self.layer2(x); conv_out.append(x);
         x = self.layer3(x); conv_out.append(x);
         layer2_downsample = nn.functional.interpolate(conv_out[-2], 
-            size=(conv_out[-2].shape[-2]//2, conv_out[-2].shape[-1]//2), 
+            size=(x.shape[-2], x.shape[-1]), 
             mode='bilinear')
         x = torch.cat([layer2_downsample,conv_out[-1]],dim=1)
 

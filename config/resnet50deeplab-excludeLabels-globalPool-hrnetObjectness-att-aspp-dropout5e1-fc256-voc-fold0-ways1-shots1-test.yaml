@@ -64,4 +64,4 @@ TEST:
   checkpoint: "epoch_25.pth"
   result: "./"
 
-DIR: "ckpt/resnet50deeplab-excludeLabels-globalPool-hrnetObjectness-att-aspp-dropout5e1-fc256-voc-fold0-ways1-shots1"
+DIR: "ckpt/old/resnet50deeplab-excludeLabels-globalPool-hrnetObjectness-att-aspp-dropout5e1-fc256-voc-fold1-ways1-shots1"

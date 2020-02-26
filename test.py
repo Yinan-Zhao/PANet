@@ -202,6 +202,11 @@ def main(cfg, gpus):
 
             count = 0
 
+            if cfg.multi_scale_test:
+                scales = [224, 328, 426]
+            else:
+                scales = [328]
+
             for sample_batched in tqdm.tqdm(testloader):
                 feed_dict = data_preprocess(sample_batched, cfg)
                 if data_name == 'COCO':
@@ -209,33 +214,40 @@ def main(cfg, gpus):
                 else:
                     label_ids = list(sample_batched['class_ids'])
 
-                if cfg.eval_att_voting or cfg.is_debug:
-                    query_pred, qread, qval, qk_b, mk_b, mv_b, p, feature_enc, feature_memory = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
-                    if cfg.eval_att_voting:
-                        height, width = qread.shape[-2], qread.shape[-1]
-                        assert p.shape[0] == height*width
-                        img_refs_mask_resize = nn.functional.interpolate(feed_dict['img_refs_mask'][0].cuda(), size=(height, width), mode='nearest')
-                        img_refs_mask_resize_flat = img_refs_mask_resize[:,0,:,:].view(img_refs_mask_resize.shape[0], -1)
-                        mask_voting_flat = torch.mm(img_refs_mask_resize_flat, p)
-                        mask_voting = mask_voting_flat.view(mask_voting_flat.shape[0], height, width)
-                        mask_voting = torch.unsqueeze(mask_voting, 0)
-                        query_pred = nn.functional.interpolate(mask_voting[:,0:-1], size=cfg.DATASET.input_size, mode='bilinear', align_corners=False)
+                for q, scale in enumerate(scales):
+                    if len(scales) > 1:
+                        feed_dict['img_data'] = nn.functional.interpolate(feed_dict['img_data'].cuda(), size=(scale, scale), mode='bilinear')
+                    if cfg.eval_att_voting or cfg.is_debug:
+                        query_pred, qread, qval, qk_b, mk_b, mv_b, p, feature_enc, feature_memory = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
+                        if cfg.eval_att_voting:
+                            height, width = qread.shape[-2], qread.shape[-1]
+                            assert p.shape[0] == height*width
+                            img_refs_mask_resize = nn.functional.interpolate(feed_dict['img_refs_mask'][0].cuda(), size=(height, width), mode='nearest')
+                            img_refs_mask_resize_flat = img_refs_mask_resize[:,0,:,:].view(img_refs_mask_resize.shape[0], -1)
+                            mask_voting_flat = torch.mm(img_refs_mask_resize_flat, p)
+                            mask_voting = mask_voting_flat.view(mask_voting_flat.shape[0], height, width)
+                            mask_voting = torch.unsqueeze(mask_voting, 0)
+                            query_pred = nn.functional.interpolate(mask_voting[:,0:-1], size=cfg.DATASET.input_size, mode='bilinear', align_corners=False)
+                            if cfg.is_debug:
+                                np.save('debug/img_refs_mask-%04d-%s-%s.npy'%(count, sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), img_refs_mask_resize.detach().cpu().float().numpy())
+                                np.save('debug/query_pred-%04d-%s-%s.npy'%(count, sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), query_pred.detach().cpu().float().numpy())
                         if cfg.is_debug:
-                            np.save('debug/img_refs_mask-%04d-%s-%s.npy'%(count, sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), img_refs_mask_resize.detach().cpu().float().numpy())
-                            np.save('debug/query_pred-%04d-%s-%s.npy'%(count, sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), query_pred.detach().cpu().float().numpy())
-                    if cfg.is_debug:
-                        np.save('debug/qread-%04d-%s-%s.npy'%(count, sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), qread.detach().cpu().float().numpy())
-                        np.save('debug/qval-%04d-%s-%s.npy'%(count, sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), qval.detach().cpu().float().numpy())
-                        #np.save('debug/qk_b-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), qk_b.detach().cpu().float().numpy())
-                        #np.save('debug/mk_b-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), mk_b.detach().cpu().float().numpy())
-                        #np.save('debug/mv_b-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), mv_b.detach().cpu().float().numpy())
-                        np.save('debug/p-%04d-%s-%s.npy'%(count, sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), p.detach().cpu().float().numpy())
-                        #np.save('debug/feature_enc-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), feature_enc[-1].detach().cpu().float().numpy())
-                        #np.save('debug/feature_memory-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), feature_memory[-1].detach().cpu().float().numpy())
-                else:
-                    #query_pred = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
-                    query_pred = segmentation_module(feed_dict, segSize=(feed_dict['seg_label_noresize'].shape[1], feed_dict['seg_label_noresize'].shape[2]))
-
+                            np.save('debug/qread-%04d-%s-%s.npy'%(count, sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), qread.detach().cpu().float().numpy())
+                            np.save('debug/qval-%04d-%s-%s.npy'%(count, sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), qval.detach().cpu().float().numpy())
+                            #np.save('debug/qk_b-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), qk_b.detach().cpu().float().numpy())
+                            #np.save('debug/mk_b-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), mk_b.detach().cpu().float().numpy())
+                            #np.save('debug/mv_b-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), mv_b.detach().cpu().float().numpy())
+                            np.save('debug/p-%04d-%s-%s.npy'%(count, sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), p.detach().cpu().float().numpy())
+                            #np.save('debug/feature_enc-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), feature_enc[-1].detach().cpu().float().numpy())
+                            #np.save('debug/feature_memory-%s-%s.npy'%(sample_batched['query_ids'][0][0], sample_batched['support_ids'][0][0][0]), feature_memory[-1].detach().cpu().float().numpy())
+                    else:
+                        #query_pred = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
+                        query_pred = segmentation_module(feed_dict, segSize=(feed_dict['seg_label_noresize'].shape[1], feed_dict['seg_label_noresize'].shape[2]))
+                        if q == 0:
+                            query_pred_final = query_pred/len(scales)
+                        else:
+                            query_pred_final += query_pred/len(scales)
+                query_pred = query_pred_final
                 metric.record(np.array(query_pred.argmax(dim=1)[0].cpu()),
                               np.array(feed_dict['seg_label_noresize'][0].cpu()),
                               labels=label_ids, n_run=run)
@@ -388,6 +400,11 @@ if __name__ == '__main__':
         help="data split",
         type=str,
     )
+    parser.add_argument(
+        "--multi_scale_test",
+        action='store_true',
+        help="use multi-scale testing",
+    )
 
     args = parser.parse_args()
 
@@ -401,6 +418,7 @@ if __name__ == '__main__':
     cfg.DATASET.debug_with_randomSegNoise = args.debug_with_randomSegNoise
     cfg.is_debug = args.is_debug
     cfg.eval_att_voting = args.eval_att_voting
+    cfg.multi_scale_test = args.multi_scale_test
     cfg.DATASET.data_split = args.data_split
     cfg.VAL.visualize = args.visualize
     cfg.VAL.n_runs = args.n_runs

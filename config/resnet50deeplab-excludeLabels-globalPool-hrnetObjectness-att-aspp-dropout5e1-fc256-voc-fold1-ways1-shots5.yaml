@@ -59,7 +59,7 @@ VAL:
   n_runs: 3
   visualize: False
   checkpoint: "iter_10000.pth"
-  seed: 323
+  seed: 321
 
 TEST:
   checkpoint: "epoch_25.pth"

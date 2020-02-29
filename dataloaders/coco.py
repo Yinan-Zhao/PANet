@@ -48,6 +48,10 @@ class COCOSeg(BaseDataset):
         if image.mode == 'L':
             image = image.convert('RGB')
 
+        image_noresize = Image.open(f"{self._base_dir}/{self.split}/{img_meta['file_name']}")
+        if image_noresize.mode == 'L':
+            image_noresize = image_noresize.convert('RGB')
+
         # Process masks
         anns = self.coco.loadAnns(annIds)
         semantic_masks = {}
@@ -60,17 +64,19 @@ class COCOSeg(BaseDataset):
                 semantic_mask = np.zeros((img_meta['height'], img_meta['width']), dtype='uint8')
                 semantic_mask[mask == 1] = catId
                 semantic_masks[catId] = semantic_mask
-        semantic_masks = {catId: Image.fromarray(semantic_mask)
+
+        semantic_masks_return = {catId: Image.fromarray(semantic_mask)
                           for catId, semantic_mask in semantic_masks.items()}
 
-        # No scribble/instance mask
-        instance_mask = Image.fromarray(np.zeros_like(semantic_mask, dtype='uint8'))
-        scribble_mask = Image.fromarray(np.zeros_like(semantic_mask, dtype='uint8'))
+        semantic_masks_noresize = {catId: Image.fromarray(semantic_mask)
+                          for catId, semantic_mask in semantic_masks.items()}
+
 
         sample = {'image': image,
-                  'label': semantic_masks,
-                  'inst': instance_mask,
-                  'scribble': scribble_mask}
+                  'image_noresize': image_noresize
+                  'label': semantic_masks_return,
+                  'label_noresize': semantic_masks_noresize
+                  }
 
         # Image-level transformation
         if self.transforms is not None:

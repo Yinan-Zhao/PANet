@@ -9,7 +9,7 @@ import torch
 import numpy as np
 
 from .pascal import VOC
-#from .coco import COCOSeg
+from .coco import COCOSeg
 from .common import PairedDataset
 
 
@@ -267,9 +267,9 @@ def voc_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots,
     return paired_data
 
 
-'''
+
 def coco_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots, max_iters,
-                 n_queries=1):
+                 n_queries=1, permute=False, exclude_labels=[]):
     """
     Args:
         base_dir:
@@ -298,6 +298,29 @@ def coco_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots
     # Load image ids for each class
     cat_ids = cocoseg.coco.getCatIds()
     sub_ids = [cocoseg.coco.getImgIds(catIds=cat_ids[i - 1]) for i in labels]
+
+    total_count = 0
+    for sub_list in sub_ids:
+        total_count += len(sub_list)
+    print('the number of training images before excluding: %d' % (total_count))
+
+    exclude_sub_ids = []
+    for label in exclude_labels:
+        exclude_sub_ids += cocoseg.coco.getImgIds(catIds=cat_ids[label - 1])
+
+    print('length of exclude_sub_ids %d' % (len(exclude_sub_ids)))
+    print(exclude_sub_ids)
+
+    for sub_ids_item in sub_ids:
+        for id_item in sub_ids_item:
+            if id_item in exclude_sub_ids:
+                sub_ids_item.remove(id_item)
+
+    after_count = 0
+    for sub_list in sub_ids:
+        after_count += len(sub_list)
+    print('the number of training images after excluding: %d' % (after_count))
+
     # Create sub-datasets and add class_id attribute
     subsets = cocoseg.subsets(sub_ids, [{'basic': {'class_id': cat_ids[i - 1]}} for i in labels])
 
@@ -310,7 +333,7 @@ def coco_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots
     paired_data = PairedDataset(subsets, n_elements=n_elements, max_iters=max_iters, same=False,
                                 pair_based_transforms=[
                                     (fewShot, {'n_ways': n_ways, 'n_shots': n_shots,
-                                               'cnt_query': cnt_query, 'coco': True})])
+                                               'cnt_query': cnt_query, 'coco': True, 'permute': permute})])
     return paired_data
-    '''
+    
     

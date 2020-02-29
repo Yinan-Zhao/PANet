@@ -26,6 +26,9 @@ from util.utils import set_seed, CLASS_LABELS
 from utils_seg import AverageMeter, parse_devices, setup_logger
 from models import ModelBuilder, SegmentationAttentionSeparateModule
 
+import sys
+sys.path.append('/home/yz9244/PANet/cocoapi/PythonAPI/')
+
 def data_preprocess(sample_batched, cfg, is_val=False):
     feed_dict = {}
     feed_dict['img_data'] = sample_batched['query_images'][0].cuda()

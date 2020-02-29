@@ -11,7 +11,6 @@ import numpy as np
 from .pascal import VOC
 from .coco import COCOSeg
 from .common import PairedDataset
-import pdb
 
 
 def segm_one_hot(segm, n_ways):

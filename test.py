@@ -26,6 +26,9 @@ from util.metric import Metric
 from util.utils import set_seed, CLASS_LABELS, get_bbox
 from lib.utils import as_numpy
 
+import sys
+sys.path.append('/home/yz9244/PANet/cocoapi/PythonAPI/')
+
 
 def visualize_result(data, pred, dir_result):
     (img, seg, info) = data

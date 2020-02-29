@@ -36,7 +36,6 @@ MODEL:
   weights_objectness_decoder: 'ckpt/hrnetv2object-c1-fc720-voc-fold2-ways1-shots1/objectness_decoder_iter_best.pth'
 
 TRAIN:
-  start_from: 'best'
   n_iters: 600000
   start_iter: 0
   n_batch: 4

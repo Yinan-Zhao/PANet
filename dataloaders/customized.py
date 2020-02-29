@@ -313,10 +313,7 @@ def coco_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots
     print('length of set exclude_sub_ids %d' % (len(exclude_sub_ids)))
     #print(exclude_sub_ids)
 
-    haha_count = 0
     for sub_ids_item in sub_ids:
-        print(haha_count)
-        haha_count += 1
         for id_item in sub_ids_item:
             if id_item in exclude_sub_ids:
                 sub_ids_item.remove(id_item)

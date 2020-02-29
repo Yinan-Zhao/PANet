@@ -52,7 +52,7 @@ TRAIN:
   disp_iter: 200
   seed: 304
   save_freq: 100000
-  eval_freq: 1000
+  eval_freq: 2000
   permute_labels: False
   fix_encoder: True
 

@@ -11,7 +11,6 @@ import numpy as np
 from .pascal import VOC
 from .coco import COCOSeg
 from .common import PairedDataset
-from sets import Set
 
 
 def segm_one_hot(segm, n_ways):
@@ -310,7 +309,7 @@ def coco_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots
         exclude_sub_ids += cocoseg.coco.getImgIds(catIds=cat_ids[label - 1])
 
     print('length of list exclude_sub_ids %d' % (len(exclude_sub_ids)))
-    exclude_sub_ids = Set(exclude_sub_ids)
+    exclude_sub_ids = set(exclude_sub_ids)
     print('length of set exclude_sub_ids %d' % (len(exclude_sub_ids)))
     #print(exclude_sub_ids)
 

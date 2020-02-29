@@ -11,6 +11,7 @@ import numpy as np
 from .pascal import VOC
 from .coco import COCOSeg
 from .common import PairedDataset
+import pdb
 
 
 def segm_one_hot(segm, n_ways):
@@ -310,6 +311,8 @@ def coco_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots
 
     print('length of exclude_sub_ids %d' % (len(exclude_sub_ids)))
     #print(exclude_sub_ids)
+
+    pdb.set_trace()
 
     for sub_ids_item in sub_ids:
         for id_item in sub_ids_item:

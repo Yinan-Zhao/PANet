@@ -26,9 +26,9 @@ from util.metric import Metric
 from util.utils import set_seed, CLASS_LABELS, get_bbox
 from lib.utils import as_numpy
 
-from pycocotools.coco import COCO
 import sys
 sys.path.append('/home/yz9244/PANet/cocoapi/PythonAPI/')
+from pycocotools.coco import COCO
 
 
 def visualize_result(data, pred, dir_result):

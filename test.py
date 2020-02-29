@@ -26,6 +26,7 @@ from util.metric import Metric
 from util.utils import set_seed, CLASS_LABELS, get_bbox
 from lib.utils import as_numpy
 
+from pycocotools.coco import COCO
 import sys
 sys.path.append('/home/yz9244/PANet/cocoapi/PythonAPI/')
 
@@ -169,6 +170,9 @@ def main(cfg, gpus):
         from dataloaders.customized import coco_fewshot
         make_data = coco_fewshot
         max_label = 80
+        split = cfg.DATASET.data_split + '2014'
+        annFile = f'{cfg.DATASET.data_dir}/annotations/instances_{split}.json'
+        cocoapi = COCO(annFile)
     else:
         raise ValueError('Wrong config for dataset!')
     labels = CLASS_LABELS[data_name]['all'] - CLASS_LABELS[data_name][cfg.TASK.fold_idx]
@@ -261,7 +265,12 @@ def main(cfg, gpus):
                     #print(feed_dict['img_data'].cpu().shape)
                     query_name = sample_batched['query_ids'][0][0]
                     support_name = sample_batched['support_ids'][0][0][0]
-                    img = imread(os.path.join(cfg.DATASET.data_dir, 'JPEGImages', query_name+'.jpg'))
+                    if data_name == 'VOC':
+                        img = imread(os.path.join(cfg.DATASET.data_dir, 'JPEGImages', query_name+'.jpg'))
+                    else:
+                        print(query_name)
+                        img_meta = cocoapi.loadImgs(query_name)[0]
+                        img = imread(os.path.join(cfg.DATASET.data_dir, split, img_meta['file_name']))
                     #img = imresize(img, cfg.DATASET.input_size)
                     visualize_result(
                         (img, as_numpy(feed_dict['seg_label_noresize'][0].cpu()), '%05d'%(count)),

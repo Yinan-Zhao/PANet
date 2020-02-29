@@ -73,7 +73,7 @@ class COCOSeg(BaseDataset):
 
 
         sample = {'image': image,
-                  'image_noresize': image_noresize
+                  'image_noresize': image_noresize,
                   'label': semantic_masks_return,
                   'label_noresize': semantic_masks_noresize
                   }

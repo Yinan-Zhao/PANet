@@ -268,6 +268,7 @@ def main(cfg, gpus):
                     if data_name == 'VOC':
                         img = imread(os.path.join(cfg.DATASET.data_dir, 'JPEGImages', query_name+'.jpg'))
                     else:
+                        query_name = int(query_name)
                         print(query_name)
                         img_meta = cocoapi.loadImgs(query_name)[0]
                         img = imread(os.path.join(cfg.DATASET.data_dir, split, img_meta['file_name']))

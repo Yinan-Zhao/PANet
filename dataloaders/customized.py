@@ -309,7 +309,7 @@ def coco_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots
         exclude_sub_ids += cocoseg.coco.getImgIds(catIds=cat_ids[label - 1])
 
     print('length of exclude_sub_ids %d' % (len(exclude_sub_ids)))
-    print(exclude_sub_ids)
+    #print(exclude_sub_ids)
 
     for sub_ids_item in sub_ids:
         for id_item in sub_ids_item:

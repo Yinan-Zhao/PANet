@@ -119,10 +119,10 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
         query_labels = []
         for i in range(n_ways):
             for j in range(cnt_query[i]):
-            tmp = 0
-            for k in paired_sample[cumsum_idx[i+1] - j - 1]['label'].keys():
-                tmp += paired_sample[cumsum_idx[i+1] - j - 1]['label'][k]
-            query_labels.append(tmp)
+                tmp = 0
+                for k in paired_sample[cumsum_idx[i+1] - j - 1]['label'].keys():
+                    tmp += paired_sample[cumsum_idx[i+1] - j - 1]['label'][k]
+                query_labels.append(tmp)
     else:
         query_labels = [paired_sample[cumsum_idx[i+1] - j - 1]['label'] for i in range(n_ways)
                         for j in range(cnt_query[i])]
@@ -133,10 +133,10 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
         query_labels_noresize = []
         for i in range(n_ways):
             for j in range(cnt_query[i]):
-            tmp = 0
-            for k in paired_sample[cumsum_idx[i+1] - j - 1]['label_noresize'].keys():
-                tmp += paired_sample[cumsum_idx[i+1] - j - 1]['label_noresize'][k]
-            query_labels_noresize.append(tmp)
+                tmp = 0
+                for k in paired_sample[cumsum_idx[i+1] - j - 1]['label_noresize'].keys():
+                    tmp += paired_sample[cumsum_idx[i+1] - j - 1]['label_noresize'][k]
+                query_labels_noresize.append(tmp)
     else:
         query_labels_noresize = [paired_sample[cumsum_idx[i+1] - j - 1]['label_noresize'] for i in range(n_ways)
                         for j in range(cnt_query[i])]

@@ -308,7 +308,9 @@ def coco_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots
     for label in exclude_labels:
         exclude_sub_ids += cocoseg.coco.getImgIds(catIds=cat_ids[label - 1])
 
-    print('length of exclude_sub_ids %d' % (len(exclude_sub_ids)))
+    print('length of list exclude_sub_ids %d' % (len(exclude_sub_ids)))
+    exclude_sub_ids = Set(exclude_sub_ids)
+    print('length of set exclude_sub_ids %d' % (len(exclude_sub_ids)))
     #print(exclude_sub_ids)
 
     haha_count = 0

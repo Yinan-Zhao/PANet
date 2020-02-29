@@ -9,7 +9,7 @@ import torch
 import numpy as np
 
 from .pascal import VOC
-#from .coco import COCOSeg
+from .coco import COCOSeg
 from .common import PairedDataset
 
 
@@ -114,15 +114,29 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
     query_images_noresize = [paired_sample[cumsum_idx[i+1] - j - 1]['image_noresize'] for i in range(n_ways)
                     for j in range(cnt_query[i])]
     if coco:
-        query_labels = [paired_sample[cumsum_idx[i+1] - j - 1]['label'][class_ids[i]]
-                        for i in range(n_ways) for j in range(cnt_query[i])]
+        #query_labels = [paired_sample[cumsum_idx[i+1] - j - 1]['label'][class_ids[i]]
+                        #for i in range(n_ways) for j in range(cnt_query[i])]
+        query_labels = []
+        for i in range(n_ways):
+            for j in range(cnt_query[i]):
+            tmp = 0
+            for k in paired_sample[cumsum_idx[i+1] - j - 1]['label'].keys():
+                tmp += paired_sample[cumsum_idx[i+1] - j - 1]['label'][k]
+            query_labels.append(tmp)
     else:
         query_labels = [paired_sample[cumsum_idx[i+1] - j - 1]['label'] for i in range(n_ways)
                         for j in range(cnt_query[i])]
 
     if coco:
-        query_labels_noresize = [paired_sample[cumsum_idx[i+1] - j - 1]['label_noresize'][class_ids[i]]
-                        for i in range(n_ways) for j in range(cnt_query[i])]
+        #query_labels_noresize = [paired_sample[cumsum_idx[i+1] - j - 1]['label_noresize'][class_ids[i]]
+                        #for i in range(n_ways) for j in range(cnt_query[i])]
+        query_labels_noresize = []
+        for i in range(n_ways):
+            for j in range(cnt_query[i]):
+            tmp = 0
+            for k in paired_sample[cumsum_idx[i+1] - j - 1]['label_noresize'].keys():
+                tmp += paired_sample[cumsum_idx[i+1] - j - 1]['label_noresize'][k]
+            query_labels_noresize.append(tmp)
     else:
         query_labels_noresize = [paired_sample[cumsum_idx[i+1] - j - 1]['label_noresize'] for i in range(n_ways)
                         for j in range(cnt_query[i])]
@@ -261,9 +275,8 @@ def voc_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots,
     return paired_data
 
 
-'''
 def coco_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots, max_iters,
-                 n_queries=1):
+                 n_queries=1, permute=False, exclude_labels=[]):
     """
     Args:
         base_dir:
@@ -292,6 +305,31 @@ def coco_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots
     # Load image ids for each class
     cat_ids = cocoseg.coco.getCatIds()
     sub_ids = [cocoseg.coco.getImgIds(catIds=cat_ids[i - 1]) for i in labels]
+
+    total_count = 0
+    for sub_list in sub_ids:
+        total_count += len(sub_list)
+    print('the number of training images before excluding: %d' % (total_count))
+
+    exclude_sub_ids = []
+    for label in exclude_labels:
+        exclude_sub_ids += cocoseg.coco.getImgIds(catIds=cat_ids[label - 1])
+
+    print('length of list exclude_sub_ids %d' % (len(exclude_sub_ids)))
+    exclude_sub_ids = set(exclude_sub_ids)
+    print('length of set exclude_sub_ids %d' % (len(exclude_sub_ids)))
+    #print(exclude_sub_ids)
+
+    for sub_ids_item in sub_ids:
+        for id_item in sub_ids_item:
+            if id_item in exclude_sub_ids:
+                sub_ids_item.remove(id_item)
+
+    after_count = 0
+    for sub_list in sub_ids:
+        after_count += len(sub_list)
+    print('the number of training images after excluding: %d' % (after_count))
+
     # Create sub-datasets and add class_id attribute
     subsets = cocoseg.subsets(sub_ids, [{'basic': {'class_id': cat_ids[i - 1]}} for i in labels])
 
@@ -304,7 +342,6 @@ def coco_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots
     paired_data = PairedDataset(subsets, n_elements=n_elements, max_iters=max_iters, same=False,
                                 pair_based_transforms=[
                                     (fewShot, {'n_ways': n_ways, 'n_shots': n_shots,
-                                               'cnt_query': cnt_query, 'coco': True})])
+                                               'cnt_query': cnt_query, 'coco': True, 'permute': permute})])
     return paired_data
-    '''
     

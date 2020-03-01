@@ -20,6 +20,7 @@ MODEL:
   use_dropout: False
 
 TRAIN:
+  start_from: 'best'
   n_iters: 600000
   start_iter: 0
   n_batch: 4

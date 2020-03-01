@@ -11,7 +11,7 @@ TASK:
   n_ways: 1
   n_shots: 1
   n_queries: 1
-  fold_idx: 0
+  fold_idx: 1
 
 MODEL:
   arch_encoder: "resnet101_deeplab"
@@ -62,4 +62,4 @@ TEST:
   checkpoint: "epoch_25.pth"
   result: "./"
 
-DIR: "ckpt/resnet101deeplab-excludeLabels-globalPool-att-aspp-dropout5e1-fc256-coco-fold0-ways1-shots1"
+DIR: "ckpt/resnet101deeplab-excludeLabels-globalPool-att-aspp-dropout5e1-fc256-coco-fold1-ways1-shots1"

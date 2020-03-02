@@ -225,7 +225,7 @@ def main(cfg, gpus):
                     if len(scales) > 1:
                         feed_dict['img_data'] = nn.functional.interpolate(feed_dict['img_data'].cuda(), size=(scale, scale), mode='bilinear')
                     if cfg.eval_att_voting or cfg.is_debug:
-                        query_pred, qread, qval, qk_b, mk_b, mv_b, p, feature_enc, feature_memory = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
+                        query_pred, qread, qval, qk_b, mk_b, mv_b, p, feature_enc, feature_memory = segmentation_module(feed_dict, segSize=(feed_dict['seg_label_noresize'].shape[1], feed_dict['seg_label_noresize'].shape[2]))
                         if cfg.eval_att_voting:
                             height, width = qread.shape[-2], qread.shape[-1]
                             assert p.shape[0] == height*width
@@ -250,10 +250,10 @@ def main(cfg, gpus):
                     else:
                         #query_pred = segmentation_module(feed_dict, segSize=cfg.DATASET.input_size)
                         query_pred = segmentation_module(feed_dict, segSize=(feed_dict['seg_label_noresize'].shape[1], feed_dict['seg_label_noresize'].shape[2]))
-                        if q == 0:
-                            query_pred_final = query_pred/len(scales)
-                        else:
-                            query_pred_final += query_pred/len(scales)
+                    if q == 0:
+                        query_pred_final = query_pred/len(scales)
+                    else:
+                        query_pred_final += query_pred/len(scales)
                 query_pred = query_pred_final
                 metric.record(np.array(query_pred.argmax(dim=1)[0].cpu()),
                               np.array(feed_dict['seg_label_noresize'][0].cpu()),

@@ -318,7 +318,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             if qmask[b,0].sum() == 0 or mmask[b,0].sum() == 0: 
                 # print('skipping read', qmask[b,0].sum(), mmask[b,0].sum())
                 # no query or mask pixels -> skip read
-                continue
+                #continue
+                pass
             qk_b = qkey[b,:,qmask[b,0]] # dk, Nq
             mk_b = mkey[b,:,mmask[b,0]] # dk, Nm
             mv_b = mval[b,:,mmask[b,0]] # dv, Nm 

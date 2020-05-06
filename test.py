@@ -29,6 +29,7 @@ from lib.utils import as_numpy
 import sys
 sys.path.append('/home/yz9244/PANet/cocoapi/PythonAPI/')
 from pycocotools.coco import COCO
+import pdb
 
 
 def visualize_result(data, pred, dir_result):
@@ -272,6 +273,7 @@ def main(cfg, gpus):
                         img_meta = cocoapi.loadImgs(query_name)[0]
                         img = imread(os.path.join(cfg.DATASET.data_dir, split, img_meta['file_name']))
                     #img = imresize(img, cfg.DATASET.input_size)
+                    pdb.set_trace()
                     visualize_result(
                         (img, as_numpy(feed_dict['seg_label_noresize'][0].cpu()), '%05d'%(count)),
                         as_numpy(np.array(query_pred.argmax(dim=1)[0].cpu())),

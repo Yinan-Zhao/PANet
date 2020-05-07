@@ -1,0 +1,1 @@
+python test_objectness.py --gpu 2 --cfg config/hrnetv2object-c1-fc720-voc-fold0-ways1-shots1.yaml --n_runs 1 --fold_idx 2 --checkpoint iter_best.pth --data_split val --visualize

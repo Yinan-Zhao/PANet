@@ -1,0 +1,1 @@
+python test.py --gpu 0 --cfg config/resnet101deeplab-excludeLabels-globalPool-hrnetObjectness-att-aspp-dropout5e1-fc256-voc-fold1-ways1-shots1.yaml --n_runs 1 --fold_idx 1 --checkpoint iter_best.pth --data_split trainaug

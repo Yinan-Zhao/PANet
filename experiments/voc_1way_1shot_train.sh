@@ -1,0 +1,1 @@
+python -u train.py --gpu 1 --cfg config/resnet101deeplab-excludeLabels-globalPool-hrnetObjectness-att-aspp-dropout5e1-fc256-voc-fold1-ways1-shots5.yaml 2>&1 | tee output/resnet101deeplab-excludeLabels-globalPool-hrnetObjectness-att-aspp-dropout5e1-fc256-voc-fold1-ways1-shots5.log

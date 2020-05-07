@@ -1,0 +1,1 @@
+python -u train_objectness.py --gpu 1 --cfg config/hrnetv2object-c1-fc720-coco-fold1-ways1-shots1.yaml 2>&1 | tee output/hrnetv2object-c1-fc720-coco-fold1-ways1-shots1-continue.log

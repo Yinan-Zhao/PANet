@@ -291,7 +291,8 @@ def main(cfg, gpus):
         n_shots=cfg.TASK.n_shots,
         n_queries=cfg.TASK.n_queries,
         permute=cfg.TRAIN.permute_labels,
-        exclude_labels=exclude_labels
+        exclude_labels=exclude_labels,
+        use_ignore=cfg.use_ignore
     )
     trainloader = DataLoader(
         dataset,
@@ -473,11 +474,17 @@ if __name__ == '__main__':
         action='store_true',
         help="use a pretrained memory encoder",
     )
+    parser.add_argument(
+        "--use_ignore",
+        action='store_true',
+        help="use a pretrained memory encoder",
+    )
     args = parser.parse_args()
 
     cfg.merge_from_file(args.cfg)
     cfg.merge_from_list(args.opts)
     cfg.memory_enc_pretrained = args.memory_enc_pretrained
+    cfg.use_ignore = use_ignore
     # cfg.freeze()
 
     logger = setup_logger(distributed_rank=0)   # TODO

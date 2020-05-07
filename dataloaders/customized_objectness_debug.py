@@ -61,7 +61,7 @@ def getMask(label, class_id, class_ids):
             'bg_mask': bg_mask}
 
 
-def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False):
+def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False, use_ignore=False):
     """
     Postprocess paired sample for fewshot settings
 
@@ -155,11 +155,20 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
     ###### Generate query label (class indices in one episode, i.e. the ground truth)######
     query_labels_tmp = [torch.zeros_like(x) for x in query_labels]
     for i, query_label_tmp in enumerate(query_labels_tmp):
-        query_label_tmp[query_labels[i] != 0] = 1
+        if use_ignore:
+            query_label_tmp[query_labels[i] != 0] = 1
+            query_label_tmp[query_labels[i] == 255] = 255
+        else:
+            query_label_tmp[query_labels[i] != 0] = 1
+
 
     query_labels_noresize_tmp = [torch.zeros_like(x) for x in query_labels_noresize]
     for i, query_label_noresize_tmp in enumerate(query_labels_noresize_tmp):
-        query_label_noresize_tmp[query_labels_noresize[i] != 0] = 1
+        if use_ignore:
+            query_label_noresize_tmp[query_labels_noresize[i] != 0] = 1
+            query_label_noresize_tmp[query_labels_noresize[i] == 255] = 255
+        else:
+            query_label_noresize_tmp[query_labels_noresize[i] != 0] = 1
         
     support_labels_tmp = [[torch.zeros_like(support_labels[way][shot]) 
                         for shot in range(n_shots)] for way in range(n_ways)]
@@ -206,7 +215,7 @@ def fewShot(paired_sample, n_ways, n_shots, cnt_query, coco=False, permute=False
 
 
 def voc_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots, max_iters,
-                n_queries=1, permute=False, exclude_labels=[]):
+                n_queries=1, permute=False, exclude_labels=[], use_ignore=False):
     """
     Args:
         base_dir:
@@ -271,7 +280,7 @@ def voc_fewshot(base_dir, split, transforms, to_tensor, labels, n_ways, n_shots,
     paired_data = PairedDataset(subsets, n_elements=n_elements, max_iters=max_iters, same=False,
                                 pair_based_transforms=[
                                     (fewShot, {'n_ways': n_ways, 'n_shots': n_shots,
-                                               'cnt_query': cnt_query, 'permute': permute})])
+                                               'cnt_query': cnt_query, 'permute': permute, 'use_ignore':use_ignore})])
     return paired_data
 
 

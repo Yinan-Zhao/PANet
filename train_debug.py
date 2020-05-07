@@ -484,7 +484,7 @@ if __name__ == '__main__':
     cfg.merge_from_file(args.cfg)
     cfg.merge_from_list(args.opts)
     cfg.memory_enc_pretrained = args.memory_enc_pretrained
-    cfg.use_ignore = use_ignore
+    cfg.use_ignore = args.use_ignore
     # cfg.freeze()
 
     logger = setup_logger(distributed_rank=0)   # TODO

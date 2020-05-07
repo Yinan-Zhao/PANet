@@ -319,11 +319,12 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             if qmask[b,0].sum() == 0 or mmask[b,0].sum() == 0: 
                 # print('skipping read', qmask[b,0].sum(), mmask[b,0].sum())
                 # no query or mask pixels -> skip read
-                qk_b = None
-                mk_b = None
-                mv_b = None
-                p = None
-                qread = None
+
+                #qk_b = None
+                #mk_b = None
+                #mv_b = None
+                #p = None
+                #qread = None
                 continue
                 #pass
             qk_b = qkey[b,:,qmask[b,0]] # dk, Nq
@@ -335,10 +336,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             #p = p / math.sqrt(Dk)
             p = F.softmax(p, dim=0)
 
-            try:
-                qread[b,:,qmask[b,0]] = torch.mm(mv_b, p) # dv, Nq
-            except:
-                pdb.set_trace()
+            qread[b,:,qmask[b,0]] = torch.mm(mv_b, p) # dv, Nq
             # qval[b,:,qmask[b,0]] = read # dv, Nq
             #qread[b,:,qmask[b,0]] = qread[b,:,qmask[b,0]] + read # dv, Nq
 

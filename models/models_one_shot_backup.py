@@ -636,11 +636,6 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
                 if self.objectness_multiply:
                     feature = torch.mul(feature, objectness_prob)
-
-                # Just for debugging. Remove later.
-                feature = qval
-
-
                 pred = self.decoder([feature])
 
             loss = self.crit(pred, feed_dict['seg_label'])
@@ -792,12 +787,6 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
             if self.objectness_multiply:
                 feature = torch.mul(feature, objectness_prob)
-
-
-            # Just for debugging. Remove later.
-            feature = qval
-
-
             pred = self.decoder([feature], segSize=segSize)
 
             if self.debug:

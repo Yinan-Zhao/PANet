@@ -1894,7 +1894,7 @@ class ASPP_Few_Shot(nn.Module):
 
         if self.use_softmax:  # is True during inference
             x = nn.functional.interpolate(
-                x, size=segSize, mode='bilinear', align_corners=False)
+                x, size=segSize, mode='bilinear', align_corners=True)
             x = nn.functional.softmax(x, dim=1)
         else:
             x = nn.functional.log_softmax(x, dim=1)

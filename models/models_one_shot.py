@@ -505,7 +505,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 qval = feature_enc[-1]
 
 
-                if self.mask_memory_RGB:
+                '''if self.mask_memory_RGB:
                     for i in range(3):
                         feed_dict['img_refs_rgb'][:,i] = feed_dict['img_refs_rgb'][:,i]*feed_dict['img_refs_mask'][:,1]
                 
@@ -644,7 +644,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     feature = qread
 
                 if self.objectness_multiply:
-                    feature = torch.mul(feature, objectness_prob)
+                    feature = torch.mul(feature, objectness_prob)'''
 
                 # Just for debugging. Remove later.
                 feature = qval
@@ -671,7 +671,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             qval = feature_enc[-1]
 
             
-            feature_memory = self.memoryEncode(self.encoder_query, feed_dict['img_refs_rgb'], return_feature_maps=True)
+            '''feature_memory = self.memoryEncode(self.encoder_query, feed_dict['img_refs_rgb'], return_feature_maps=True)
             mkey, mval_rgb = self.memoryAttention(self.attention_query, feature_memory)
 
             mask_feature_memory = self.memoryEncode(self.encoder_memory, feed_dict['img_refs_mask'], return_feature_maps=True)
@@ -804,7 +804,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 feature = qread
 
             if self.objectness_multiply:
-                feature = torch.mul(feature, objectness_prob)
+                feature = torch.mul(feature, objectness_prob)'''
 
 
             # Just for debugging. Remove later.

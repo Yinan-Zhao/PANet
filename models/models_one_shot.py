@@ -500,6 +500,11 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
          
                 qkey, qval = self.attention_query(feature_enc)
 
+
+                # just for debugging, remove later
+                qval = feature_enc
+
+
                 if self.mask_memory_RGB:
                     for i in range(3):
                         feed_dict['img_refs_rgb'][:,i] = feed_dict['img_refs_rgb'][:,i]*feed_dict['img_refs_mask'][:,1]
@@ -661,6 +666,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         else:
             feature_enc = self.encoder_query(feed_dict['img_data'], return_feature_maps=True)                
             qkey, qval = self.attention_query(feature_enc)
+
+            # just for debugging, remove later
+            qval = feature_enc
+
             
             feature_memory = self.memoryEncode(self.encoder_query, feed_dict['img_refs_rgb'], return_feature_maps=True)
             mkey, mval_rgb = self.memoryAttention(self.attention_query, feature_memory)

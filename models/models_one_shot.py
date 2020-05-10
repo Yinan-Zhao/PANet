@@ -502,7 +502,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
 
                 # just for debugging, remove later
-                qval = feature_enc
+                qval = feature_enc[-1]
 
 
                 if self.mask_memory_RGB:
@@ -668,7 +668,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
             qkey, qval = self.attention_query(feature_enc)
 
             # just for debugging, remove later
-            qval = feature_enc
+            qval = feature_enc[-1]
 
             
             feature_memory = self.memoryEncode(self.encoder_query, feed_dict['img_refs_rgb'], return_feature_maps=True)

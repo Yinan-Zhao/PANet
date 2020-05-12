@@ -4,7 +4,7 @@ DATASET:
   data_split: "trainaug"
   input_size: (328, 328)
   padding_constant: 8
-  segm_downsampling_rate: 8
+  segm_downsampling_rate: 4
   exclude_labels: True
 
 TASK:

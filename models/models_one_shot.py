@@ -652,6 +652,10 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
                 pred = self.decoder([feature])
 
+            pred = nn.functional.interpolate(pred, 
+                    size=(41,41), 
+                    mode='bilinear')
+
             loss = self.crit(pred, feed_dict['seg_label'])
             '''if self.deep_sup_scale is not None:
                 loss_deepsup = self.crit(pred_deepsup, feed_dict['seg_label'])

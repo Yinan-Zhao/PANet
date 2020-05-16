@@ -888,8 +888,12 @@ class ModelBuilder:
         else:
             raise Exception('Architecture undefined!')
 
+
         # encoders are usually pretrained
-        # net_encoder.apply(ModelBuilder.weights_init)
+        pretrained = False
+        net_encoder.apply(ModelBuilder.weights_init)
+
+
         if len(weights) > 0:
             print('Loading weights for net_encoder')
             net_encoder.load_state_dict(

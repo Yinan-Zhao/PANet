@@ -76,6 +76,8 @@ class ResNet_Deeplab(nn.Module):
         self.layer3 = self._make_layer(block, 256, layers[2], stride=1, dilation=2)
         #print('dilation is 1 now')
         #self.layer3 = self._make_layer(block, 256, layers[2], stride=1, dilation=1)
+        print('add layer4 now!')
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=1, dilation=4)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -129,8 +131,8 @@ class ResNet_Deeplab_Objectness(nn.Module):
         for i in self.bn1.parameters():
             i.requires_grad = False
         self.relu = nn.ReLU(inplace=True)
-        #self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)
+        #self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=1, dilation=2)

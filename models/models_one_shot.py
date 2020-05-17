@@ -212,13 +212,13 @@ def load_resnet101_param(model, stop_layer='layer4'):
 def ResNet50_Deeplab(pretrained=True, **kwargs):
     model = ResNet_Deeplab(Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
-        model=load_resnet50_param(model)
+        model=load_resnet50_param(model, stop_layer='fc')
     return model
 
 def ResNet101_Deeplab(pretrained=True, **kwargs):
     model = ResNet_Deeplab(Bottleneck, [3, 4, 23, 3], **kwargs)
     if pretrained:
-        model=load_resnet101_param(model)
+        model=load_resnet101_param(model, stop_layer='fc')
     return model
 
 def ResNet50_Deeplab_Objectness(pretrained=True, **kwargs):

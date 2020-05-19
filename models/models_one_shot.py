@@ -896,8 +896,8 @@ class ModelBuilder:
 
 
         # encoders are usually pretrained
-        #pretrained = False
-        #net_encoder.apply(ModelBuilder.weights_init)
+        pretrained = False
+        net_encoder.apply(ModelBuilder.weights_init)
 
 
         if len(weights) > 0:

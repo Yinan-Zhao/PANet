@@ -67,17 +67,12 @@ class ResNet_Deeplab(nn.Module):
         for i in self.bn1.parameters():
             i.requires_grad = False
         self.relu = nn.ReLU(inplace=True)
-        print('ceil mode is on!')
+        print('using ceil mode for max pooling!')
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)
         #self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
-
         self.layer3 = self._make_layer(block, 256, layers[2], stride=1, dilation=2)
-        #print('dilation is 1 now')
-        #self.layer3 = self._make_layer(block, 256, layers[2], stride=1, dilation=1)
-        print('add layer4 now!')
-        self.layer4 = self._make_layer(block, 512, layers[3], stride=1, dilation=4)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -131,8 +126,8 @@ class ResNet_Deeplab_Objectness(nn.Module):
         for i in self.bn1.parameters():
             i.requires_grad = False
         self.relu = nn.ReLU(inplace=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)
-        #self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        #self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=1, dilation=2)
@@ -212,13 +207,13 @@ def load_resnet101_param(model, stop_layer='layer4'):
 def ResNet50_Deeplab(pretrained=True, **kwargs):
     model = ResNet_Deeplab(Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
-        model=load_resnet50_param(model, stop_layer='fc')
+        model=load_resnet50_param(model)
     return model
 
 def ResNet101_Deeplab(pretrained=True, **kwargs):
     model = ResNet_Deeplab(Bottleneck, [3, 4, 23, 3], **kwargs)
     if pretrained:
-        model=load_resnet101_param(model, stop_layer='fc')
+        model=load_resnet101_param(model)
     return model
 
 def ResNet50_Deeplab_Objectness(pretrained=True, **kwargs):
@@ -502,12 +497,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
          
                 qkey, qval = self.attention_query(feature_enc)
 
-
-                # just for debugging, remove later
-                qval = feature_enc[-1]
-
-
-                '''if self.mask_memory_RGB:
+                if self.mask_memory_RGB:
                     for i in range(3):
                         feed_dict['img_refs_rgb'][:,i] = feed_dict['img_refs_rgb'][:,i]*feed_dict['img_refs_mask'][:,1]
                 
@@ -646,16 +636,11 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     feature = qread
 
                 if self.objectness_multiply:
-                    feature = torch.mul(feature, objectness_prob)'''
-
-                # Just for debugging. Remove later.
-                feature = qval
-
-
+                    feature = torch.mul(feature, objectness_prob)
                 pred = self.decoder([feature])
 
             pred = nn.functional.interpolate(pred, 
-                    size=(41,41), 
+                    size=feed_dict['seg_label'].shape[-2:], 
                     mode='bilinear')
 
             loss = self.crit(pred, feed_dict['seg_label'])
@@ -672,12 +657,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
         else:
             feature_enc = self.encoder_query(feed_dict['img_data'], return_feature_maps=True)                
             qkey, qval = self.attention_query(feature_enc)
-
-            # just for debugging, remove later
-            qval = feature_enc[-1]
-
             
-            '''feature_memory = self.memoryEncode(self.encoder_query, feed_dict['img_refs_rgb'], return_feature_maps=True)
+            feature_memory = self.memoryEncode(self.encoder_query, feed_dict['img_refs_rgb'], return_feature_maps=True)
             mkey, mval_rgb = self.memoryAttention(self.attention_query, feature_memory)
 
             mask_feature_memory = self.memoryEncode(self.encoder_memory, feed_dict['img_refs_mask'], return_feature_maps=True)
@@ -810,13 +791,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 feature = qread
 
             if self.objectness_multiply:
-                feature = torch.mul(feature, objectness_prob)'''
-
-
-            # Just for debugging. Remove later.
-            feature = qval
-
-
+                feature = torch.mul(feature, objectness_prob)
             pred = self.decoder([feature], segSize=segSize)
 
             if self.debug:
@@ -889,17 +864,11 @@ class ModelBuilder:
         elif arch == 'resnet101':
             orig_resnet = resnet.__dict__['resnet101'](pretrained=pretrained)
             net_encoder = Resnet_middle(orig_resnet)
-        elif arch == 'hrnetv2':
-            net_encoder = hrnet.__dict__['hrnetv2'](pretrained=pretrained, input_dim=3)
         else:
             raise Exception('Architecture undefined!')
 
-
         # encoders are usually pretrained
-        pretrained = False
-        net_encoder.apply(ModelBuilder.weights_init)
-
-
+        # net_encoder.apply(ModelBuilder.weights_init)
         if len(weights) > 0:
             print('Loading weights for net_encoder')
             net_encoder.load_state_dict(

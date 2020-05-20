@@ -111,6 +111,9 @@ class ResNet_Deeplab(nn.Module):
         feat_layer2 = x
         feat_layer3 = self.layer3(x)
         x=torch.cat([feat_layer2,feat_layer3],dim=1)
+        x = nn.functional.interpolate(x, 
+                size=(x.shape[-2]-1, x.shape[-1]-1), 
+                mode='bilinear')
         if return_feature_maps:
             return [x]
         else:
@@ -537,8 +540,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
                 qmask = torch.ones_like(qkey)[:,0:1] > 0.
                 if self.mask_foreground:
-                    #mmask = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=self.segm_downsampling_rate, mode='nearest') > 0.5
-                    mmask = self.downsample_5d_shape(feed_dict['img_refs_mask'][:,1:2,:,:,:], shape=mkey.shape[-2:], mode='nearest') > 0.5
+                    mmask = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=self.segm_downsampling_rate, mode='nearest') > 0.5
+                    #mmask = self.downsample_5d_shape(feed_dict['img_refs_mask'][:,1:2,:,:,:], shape=mkey.shape[-2:], mode='nearest') > 0.5
                 else:
                     mmask = torch.ones_like(mkey)[:,0:1] > 0.
 
@@ -581,7 +584,6 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     if self.debug:
                         qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape, self.debug)
                     else:
-                        pdb.set_trace()
                         qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape)
 
                 if self.att_mat_downsample_rate != 1:
@@ -650,9 +652,9 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     feature = torch.mul(feature, objectness_prob)
                 pred = self.decoder([feature])
 
-            pred = nn.functional.interpolate(pred, 
+            '''pred = nn.functional.interpolate(pred, 
                     size=feed_dict['seg_label'].shape[-2:], 
-                    mode='bilinear')
+                    mode='bilinear')'''
 
             loss = self.crit(pred, feed_dict['seg_label'])
             '''if self.deep_sup_scale is not None:

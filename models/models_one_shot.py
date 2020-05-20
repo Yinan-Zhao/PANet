@@ -581,6 +581,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                     if self.debug:
                         qk_b, mk_b, mv_b, p, qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape, self.debug)
                     else:
+                        pdb.set_trace()
                         qread = self.maskRead(qkey, qmask, mkey, mval, mmask, output_shape)
 
                 if self.att_mat_downsample_rate != 1:

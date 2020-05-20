@@ -487,6 +487,15 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
                 mode=mode)
         return feat_downsample
 
+    def downsample_5d_shape(self, feat, shape, mode='bilinear'):
+        # feat: b,dk,t,h,w
+        feat_downsample = torch.zeros(feat.shape[0], feat.shape[1], feat.shape[2], shape[0], shape[1]).cuda()
+        for t in range(feat.shape[2]):
+            feat_downsample[:,:,t,:,:] = nn.functional.interpolate(feat[:,:,t,:,:], 
+                size=(shape[0], shape[1]), 
+                mode=mode)
+        return feat_downsample
+
     def forward(self, feed_dict, *, segSize=None):
         # training
         if segSize is None:
@@ -528,7 +537,8 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
                 qmask = torch.ones_like(qkey)[:,0:1] > 0.
                 if self.mask_foreground:
-                    mmask = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=self.segm_downsampling_rate, mode='nearest') > 0.5
+                    #mmask = self.downsample_5d(feed_dict['img_refs_mask'][:,1:2,:,:,:], downsample_rate=self.segm_downsampling_rate, mode='nearest') > 0.5
+                    mmask = self.downsample_5d_shape(feed_dict['img_refs_mask'][:,1:2,:,:,:], shape=mkey.shape[-2:], mode='nearest') > 0.5
                 else:
                     mmask = torch.ones_like(mkey)[:,0:1] > 0.
 

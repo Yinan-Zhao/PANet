@@ -67,9 +67,9 @@ class ResNet_Deeplab(nn.Module):
         for i in self.bn1.parameters():
             i.requires_grad = False
         self.relu = nn.ReLU(inplace=True)
-        print('using ceil mode for max pooling!')
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)
-        #self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        #print('using ceil mode for max pooling!')
+        #self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=1, dilation=2)
@@ -111,9 +111,9 @@ class ResNet_Deeplab(nn.Module):
         feat_layer2 = x
         feat_layer3 = self.layer3(x)
         x=torch.cat([feat_layer2,feat_layer3],dim=1)
-        x = nn.functional.interpolate(x, 
+        '''x = nn.functional.interpolate(x, 
                 size=(x.shape[-2]-1, x.shape[-1]-1), 
-                mode='bilinear')
+                mode='bilinear')'''
         if return_feature_maps:
             return [x]
         else:

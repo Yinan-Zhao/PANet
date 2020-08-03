@@ -48,7 +48,7 @@ _C.TASK.fold_idx = 0
 # -----------------------------------------------------------------------------
 _C.MODEL = CN()
 # architecture of net_objectness
-_C.MODEL.arch_objectness = "resnet50_deeplab"
+_C.MODEL.arch_objectness = "hrnetv2"
 # architecture of net_encoder
 _C.MODEL.arch_encoder = "resnet50dilated"
 # architecture of net_enc_memory

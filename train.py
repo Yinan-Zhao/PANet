@@ -235,7 +235,7 @@ def main(cfg, gpus):
             dropout_rate=0.5,
             use_dropout=True)'''
         net_objectness = ModelBuilder.build_objectness(
-            arch='hrnetv2',
+            arch=cfg.MODEL.arch_objectness,
             weights=cfg.MODEL.weights_objectness,
             fix_encoder=True)
         net_objectness_decoder = ModelBuilder.build_decoder(

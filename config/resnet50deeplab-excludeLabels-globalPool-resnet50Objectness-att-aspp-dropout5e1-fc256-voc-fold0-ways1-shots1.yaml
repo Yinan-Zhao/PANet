@@ -23,7 +23,7 @@ MODEL:
   att_mat_downsample_rate: 1
   objectness_feat_downsample_rate: 1
   fc_dim: 512
-  decoder_objectness_dim: 512
+  decoder_objectness_dim: 2048
   encoder_dim: 1536
   decoder_dim: 513
   decoder_fc_dim: 256

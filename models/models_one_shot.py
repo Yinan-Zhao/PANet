@@ -623,7 +623,6 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
                 if self.objectness and self.objectness_decoder:
                     feat_objectness = self.objectness(feed_dict['img_data'], return_feature_maps=True)
-                    pdb.set_trace()
                     pred_objectness = self.objectness_decoder(feat_objectness, return_softmax_noresize=True)
                     if self.objectness_feat_downsample_rate != 1.:
                         pred_objectness = nn.functional.interpolate(pred_objectness, 

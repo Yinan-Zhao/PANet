@@ -623,6 +623,7 @@ class SegmentationAttentionSeparateModule(SegmentationModuleBase):
 
                 if self.objectness and self.objectness_decoder:
                     feat_objectness = self.objectness(feed_dict['img_data'], return_feature_maps=True)
+                    pdb.set_trace()
                     pred_objectness = self.objectness_decoder(feat_objectness, return_softmax_noresize=True)
                     if self.objectness_feat_downsample_rate != 1.:
                         pred_objectness = nn.functional.interpolate(pred_objectness, 
@@ -906,7 +907,7 @@ class ModelBuilder:
         # encoders are usually pretrained
         # net_encoder.apply(ModelBuilder.weights_init)
         if len(weights) > 0:
-            print('Loading weights for net_encoder')
+            print('Loading weights for net_objectness')
             net_encoder.load_state_dict(
                 torch.load(weights, map_location=lambda storage, loc: storage), strict=False)
 

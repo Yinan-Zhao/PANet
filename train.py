@@ -240,8 +240,8 @@ def main(cfg, gpus):
             fix_encoder=True)
         net_objectness_decoder = ModelBuilder.build_decoder(
             arch='c1_nodropout',
-            input_dim=720,
-            fc_dim=720,
+            input_dim=cfg.MODEL.decoder_objectness_dim,
+            fc_dim=cfg.MODEL.decoder_objectness_dim,
             ppm_dim=256,
             num_class=2,
             weights=cfg.MODEL.weights_objectness_decoder,

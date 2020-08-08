@@ -877,6 +877,8 @@ class ModelBuilder:
         elif arch == 'resnet101':
             orig_resnet = resnet.__dict__['resnet101'](pretrained=pretrained)
             net_encoder = Resnet_middle(orig_resnet)
+        elif arch == 'hrnetv2':
+            net_encoder = hrnet.__dict__['hrnetv2'](pretrained=pretrained, input_dim=3)
         else:
             raise Exception('Architecture undefined!')
 

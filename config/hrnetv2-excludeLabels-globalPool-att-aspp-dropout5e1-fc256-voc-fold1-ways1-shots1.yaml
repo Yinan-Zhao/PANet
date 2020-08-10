@@ -1,0 +1,66 @@
+DATASET:
+  name: "VOC"
+  data_dir: "./data/pascal/VOCdevkit/VOC2012/"
+  data_split: "trainaug"
+  input_size: (328, 328)
+  padding_constant: 8
+  segm_downsampling_rate: 4
+  exclude_labels: True
+
+TASK:
+  n_ways: 1
+  n_shots: 1
+  n_queries: 1
+  fold_idx: 1
+
+MODEL:
+  arch_encoder: "hrnetv2"
+  arch_memory_encoder: "c1"
+  arch_attention: "attention"
+  arch_decoder: "aspp_few_shot"
+  mask_feat_downsample_rate: 1
+  att_mat_downsample_rate: 1
+  objectness_feat_downsample_rate: 1
+  fc_dim: 512
+  encoder_dim: 720
+  decoder_dim: 512
+  decoder_fc_dim: 256
+  normalize_key: False
+  global_pool_read: True
+  use_dropout: True
+  dropout_rate: 0.5
+  mask_foreground: True
+  average_memory_voting: False
+  average_memory_voting_nonorm: False
+
+TRAIN:
+  n_iters: 600000
+  start_iter: 0
+  n_batch: 4
+  optim: "SGD"
+  lr_encoder: 0.0025
+  lr_decoder: 0.0025
+  lr_pow: 0.9
+  beta1: 0.9
+  weight_decay: 1e-4
+  deep_sup_scale: 0.4
+  fix_bn: False
+  workers: 4
+  disp_iter: 200
+  seed: 304
+  save_freq: 100000
+  eval_freq: 5000
+  permute_labels: False
+  fix_encoder: True
+
+VAL:
+  n_runs: 3
+  visualize: False
+  checkpoint: "iter_10000.pth"
+  seed: 321
+
+TEST:
+  checkpoint: "epoch_25.pth"
+  result: "./"
+
+DIR: "ckpt/hrnetv2-excludeLabels-globalPool-att-aspp-dropout5e1-fc256-voc-fold1-ways1-shots1"

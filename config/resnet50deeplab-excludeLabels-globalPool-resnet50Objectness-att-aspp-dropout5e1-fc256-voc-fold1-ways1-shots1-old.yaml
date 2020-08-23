@@ -34,8 +34,8 @@ MODEL:
   mask_foreground: True
   average_memory_voting: False
   average_memory_voting_nonorm: False
-  weights_objectness: 'ckpt/resnet50deeplabobject-c1-fc2048-voc-fold1-ways1-shots1/objectness_iter_best.pth'
-  weights_objectness_decoder: 'ckpt/resnet50deeplabobject-c1-fc2048-voc-fold1-ways1-shots1/objectness_decoder_iter_best.pth'
+  weights_objectness: 'ckpt/resnet50deeplabobject-aspp-dropout5e1-fc256-voc-fold1-ways1-shots1/objectness_iter_best.pth'
+  weights_objectness_decoder: 'ckpt/resnet50deeplabobject-aspp-dropout5e1-fc256-voc-fold1-ways1-shots1/objectness_decoder_iter_best.pth'
 
 TRAIN:
   n_iters: 600000

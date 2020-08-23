@@ -225,6 +225,12 @@ def ResNet50_Deeplab_Objectness(pretrained=True, **kwargs):
         model=load_resnet50_param(model, stop_layer='fc')
     return model
 
+def ResNet101_Deeplab_Objectness(pretrained=True, **kwargs):
+    model = ResNet_Deeplab_Objectness(Bottleneck, [3, 4, 23, 3], **kwargs)
+    if pretrained:
+        model=load_resnet101_param(model, stop_layer='fc')
+    return model
+
 
 class SegmentationModuleBase(nn.Module):
     def __init__(self):
@@ -900,6 +906,8 @@ class ModelBuilder:
         arch = arch.lower()
         if arch == 'resnet50_deeplab':
             net_encoder = ResNet50_Deeplab_Objectness(pretrained=pretrained)
+        elif arch == 'resnet101_deeplab':
+            net_encoder = ResNet101_Deeplab_Objectness(pretrained=pretrained)
         elif arch == 'hrnetv2':
             net_encoder = hrnet.__dict__['hrnetv2'](pretrained=pretrained, input_dim=3)
         else:

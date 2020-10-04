@@ -54,6 +54,7 @@ TRAIN:
   eval_freq: 5000
   permute_labels: False
   fix_encoder: True
+  start_from: "latest"
 
 VAL:
   n_runs: 3

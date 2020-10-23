@@ -54,10 +54,9 @@ TRAIN:
   eval_freq: 5000
   permute_labels: False
   fix_encoder: True
-  start_from: 'latest'
 
 VAL:
-  n_runs: 3
+  n_runs: 1
   visualize: False
   checkpoint: "iter_10000.pth"
 

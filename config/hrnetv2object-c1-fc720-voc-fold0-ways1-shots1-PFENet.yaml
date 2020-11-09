@@ -1,0 +1,50 @@
+DATASET:
+  name: "VOC"
+  data_dir: "/"
+  train_list: /home/yz9244/PFENet/lists/pascal/voc_sbd_merge_noduplicate.txt
+  val_list: /home/yz9244/PFENet/lists/pascal/val.txt
+  input_size: (473, 473)
+  segm_downsampling_rate: 4
+
+TASK:
+  n_ways: 1
+  n_shots: 1
+  n_queries: 1
+  fold_idx: 0
+
+MODEL:
+  arch_objectness: "hrnetv2"
+  arch_decoder: "c1_nodropout_pfenet"
+  fc_dim: 720
+  decoder_dim: 720
+  use_dropout: False
+
+TRAIN:
+  n_iters: 600000
+  start_iter: 0
+  n_batch: 4
+  optim: "SGD"
+  lr_encoder: 0.002
+  lr_decoder: 0.002
+  lr_pow: 0.9
+  beta1: 0.9
+  weight_decay: 1e-4
+  deep_sup_scale: 0.4
+  fix_bn: False
+  workers: 4
+  disp_iter: 200
+  seed: 304
+  save_freq: 100000
+  eval_freq: 5000
+  fix_encoder: False
+
+VAL:
+  n_runs: 3
+  visualize: False
+  checkpoint: "iter_10000.pth"
+
+TEST:
+  checkpoint: "epoch_25.pth"
+  result: "./"
+
+DIR: "ckpt/hrnetv2object-c1-fc720-voc-fold0-ways1-shots1"

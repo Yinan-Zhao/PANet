@@ -13,6 +13,8 @@ _C.DIR = "ckpt/ade20k-resnet50dilated-ppm_deepsup"
 _C.DATASET = CN()
 _C.DATASET.name = "VOC"
 _C.DATASET.data_dir = "./data/pascal/VOCdevkit/VOC2012/"
+_C.DATASET.train_list = ""
+_C.DATASET.val_list = ""
 _C.DATASET.data_split = "trainaug"
 _C.DATASET.input_size = (256, 256)
 

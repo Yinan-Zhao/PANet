@@ -47,4 +47,4 @@ TEST:
   checkpoint: "epoch_25.pth"
   result: "./"
 
-DIR: "ckpt/hrnetv2object-c1-fc720-voc-fold0-ways1-shots1"
+DIR: "ckpt/hrnetv2object-c1-fc720-voc-fold0-ways1-shots1-PFENet"

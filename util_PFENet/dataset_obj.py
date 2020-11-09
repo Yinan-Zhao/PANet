@@ -181,7 +181,7 @@ class SemData(Dataset):
         for target_pix in target_pix_list:
             if target_pix[0].shape[0] > 0:
                 label[target_pix[0],target_pix[1]] = 1 
-        label[ignore_pix[0],ignore_pix[1]] = 255           
+        label[ignore_pix[0],ignore_pix[1]] = 0           
                    
         
         raw_label = label.copy()

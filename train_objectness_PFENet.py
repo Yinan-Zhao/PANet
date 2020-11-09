@@ -186,7 +186,7 @@ def main(cfg, gpus):
     tic = time.time()
 
     print('###### Training ######')
-    for i_iter, (input, target) in enumerate(trainloader):
+    for i_iter, (input, target) in enumerate(train_loader):
         # Prepare input
 
         input = input.cuda(non_blocking=True)

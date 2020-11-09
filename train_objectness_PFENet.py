@@ -162,6 +162,15 @@ def main(cfg, gpus):
     train_sampler = None
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=cfg.TRAIN.n_batch, shuffle=(train_sampler is None), num_workers=cfg.TRAIN.workers, pin_memory=True, sampler=train_sampler, drop_last=True)
 
+    val_transform = transform.Compose([
+        transform.Resize(size=args.val_size),
+        transform.ToTensor(),
+        transform.Normalize(mean=mean, std=std)])    
+     
+    val_data = dataset.SemData(split=cfg.TASK.fold_idx, shot=cfg.TASK.n_shots, data_root=cfg.DATASET.data_dir, data_list=cfg.DATASET.val_list, transform=val_transform, mode='val', use_coco=False, use_split_coco=False)
+    val_sampler = None
+    val_loader = torch.utils.data.DataLoader(val_data, batch_size=cfg.VAL.n_batch, shuffle=False, num_workers=args.workers, pin_memory=True, sampler=val_sampler)
+
 
     #segmentation_module = nn.DataParallel(segmentation_module, device_ids=gpus)
     net_objectness.cuda()
@@ -184,105 +193,97 @@ def main(cfg, gpus):
     best_iou = 0
     # main loop
     tic = time.time()
+    i_iter = 0
+    print('###### Training ######')    
+    for epoch in range(0, 200):
+        for _, (input, target) in enumerate(train_loader):
+            # Prepare input
+            i_iter += 1
+            input = input.cuda(non_blocking=True)
+            target = target.cuda(non_blocking=True)
 
-    print('###### Training ######')
-    for i_iter, (input, target) in enumerate(train_loader):
-        # Prepare input
+            data_time.update(time.time() - tic)
+            net_objectness.zero_grad()
+            net_decoder.zero_grad()
 
-        input = input.cuda(non_blocking=True)
-        target = target.cuda(non_blocking=True)
+            # adjust learning rate
+            adjust_learning_rate(optimizers, i_iter, cfg)
 
-        data_time.update(time.time() - tic)
-        net_objectness.zero_grad()
-        net_decoder.zero_grad()
+            # forward pass
+            feat = net_objectness(input, return_feature_maps=True)
+            pred = net_decoder(feat, segSize=cfg.DATASET.input_size)
+            loss = crit(pred, target)
+            acc = pixel_acc(pred, target)
+            loss = loss.mean()
+            acc = acc.mean()
 
-        # adjust learning rate
-        adjust_learning_rate(optimizers, i_iter, cfg)
+            # Backward
+            loss.backward()
+            for optimizer in optimizers:
+                if optimizer:
+                    optimizer.step()
 
-        # forward pass
-        feat = net_objectness(input, return_feature_maps=True)
-        pred = net_decoder(feat, segSize=cfg.DATASET.input_size)
-        loss = crit(pred, target)
-        acc = pixel_acc(pred, target)
-        loss = loss.mean()
-        acc = acc.mean()
+            # measure elapsed time
+            batch_time.update(time.time() - tic)
+            tic = time.time()
 
-        # Backward
-        loss.backward()
-        for optimizer in optimizers:
-            if optimizer:
-                optimizer.step()
+            # update average loss and acc
+            ave_total_loss.update(loss.data.item())
+            ave_acc.update(acc.data.item()*100)
 
-        # measure elapsed time
-        batch_time.update(time.time() - tic)
-        tic = time.time()
+            # calculate accuracy, and display
+            if i_iter % cfg.TRAIN.disp_iter == 0:
+                print('Iter: [{}][{}/{}], Time: {:.2f}, Data: {:.2f}, '
+                      'lr_encoder: {:.6f}, lr_decoder: {:.6f}, '
+                      'Ave_Accuracy: {:4.2f}, Accuracy:{:4.2f}, Ave_Loss: {:.6f}, Loss: {:.6f}'
+                      .format(i_iter, i_iter, cfg.TRAIN.n_iters,
+                              batch_time.average(), data_time.average(),
+                              cfg.TRAIN.running_lr_encoder, cfg.TRAIN.running_lr_decoder,
+                              ave_acc.average(), acc.data.item()*100, ave_total_loss.average(), loss.data.item()))
 
-        # update average loss and acc
-        ave_total_loss.update(loss.data.item())
-        ave_acc.update(acc.data.item()*100)
+                history['train']['iter'].append(i_iter)
+                history['train']['loss'].append(loss.data.item())
+                history['train']['acc'].append(acc.data.item())
 
-        # calculate accuracy, and display
-        if i_iter % cfg.TRAIN.disp_iter == 0:
-            print('Iter: [{}][{}/{}], Time: {:.2f}, Data: {:.2f}, '
-                  'lr_encoder: {:.6f}, lr_decoder: {:.6f}, '
-                  'Accuracy: {:4.2f}, Loss: {:.6f}'
-                  .format(i_iter, i_iter, cfg.TRAIN.n_iters,
-                          batch_time.average(), data_time.average(),
-                          cfg.TRAIN.running_lr_encoder, cfg.TRAIN.running_lr_decoder,
-                          ave_acc.average(), ave_total_loss.average()))
+            if (i_iter+1) % cfg.TRAIN.save_freq == 0:
+                checkpoint(nets, history, cfg, i_iter+1)
 
-            history['train']['iter'].append(i_iter)
-            history['train']['loss'].append(loss.data.item())
-            history['train']['acc'].append(acc.data.item())
+            if (i_iter+1) % cfg.TRAIN.eval_freq == 0:
+                metric = Metric(max_label=max_label, n_runs=cfg.VAL.n_runs)
+                with torch.no_grad():
+                    print ('----Evaluation----')
+                    net_objectness.eval()
+                    net_decoder.eval()
+                    net_decoder.use_softmax = True
+                    #for run in range(cfg.VAL.n_runs):
+                    for run in range(3):
+                        print(f'### Run {run + 1} ###')
+                        set_seed(cfg.VAL.seed + run)
 
-        if (i_iter+1) % cfg.TRAIN.save_freq == 0:
-            checkpoint(nets, history, cfg, i_iter+1)
+                        print(f'### Load validation data ###')
 
-        if (i_iter+1) % cfg.TRAIN.eval_freq == 0:
-            metric = Metric(max_label=max_label, n_runs=cfg.VAL.n_runs)
-            with torch.no_grad():
-                print ('----Evaluation----')
-                net_objectness.eval()
-                net_decoder.eval()
-                net_decoder.use_softmax = True
-                for run in range(cfg.VAL.n_runs):
-                    print(f'### Run {run + 1} ###')
-                    set_seed(cfg.VAL.seed + run)
-
-                    print(f'### Load validation data ###')
-                    val_transform = transform.Compose([
-                    transform.Resize(size=args.val_size),
-                    transform.ToTensor(),
-                    transform.Normalize(mean=mean, std=std)])    
-                     
-                    val_data = dataset.SemData(split=cfg.TASK.fold_idx, shot=cfg.TASK.n_shots, data_root=cfg.DATASET.data_dir, data_list=cfg.DATASET.val_list, transform=val_transform, mode='val', use_coco=False, use_split_coco=False)
-                    val_sampler = None
-                    val_loader = torch.utils.data.DataLoader(val_data, batch_size=cfg.VAL.n_batch, shuffle=False, num_workers=args.workers, pin_memory=True, sampler=val_sampler)
-
-
-                    #for sample_batched in tqdm.tqdm(testloader):
-                    for (input, target, _) in val_loader:
-
-                        feat = net_objectness(input, return_feature_maps=True)
-                        query_pred = net_decoder(feat, segSize=cfg.DATASET.input_size)
-                        metric.record(np.array(query_pred.argmax(dim=1)[0].cpu()),
-                                      np.array(target[0].cpu()),
-                                      labels=None, n_run=run)
+                        #for sample_batched in tqdm.tqdm(testloader):
+                        for (input, target, _) in val_loader:
+                            feat = net_objectness(input, return_feature_maps=True)
+                            query_pred = net_decoder(feat, segSize=cfg.DATASET.input_size)
+                            metric.record(np.array(query_pred.argmax(dim=1)[0].cpu()),
+                                          np.array(target[0].cpu()),
+                                          labels=None, n_run=run)
 
 
-            classIoU_binary, classIoU_std_binary, meanIoU_binary, meanIoU_std_binary = metric.get_mIoU_binary()
+                classIoU_binary, classIoU_std_binary, meanIoU_binary, meanIoU_std_binary = metric.get_mIoU_binary()
 
-            print('----- Evaluation Result -----')
-            print(f'best meanIoU_binary: {best_iou}')
-            print(f'meanIoU_binary mean: {meanIoU_binary}')
-            print(f'meanIoU_binary std: {meanIoU_std_binary}')
+                print('----- Evaluation Result -----')
+                print(f'best meanIoU_binary: {best_iou}')
+                print(f'meanIoU_binary mean: {meanIoU_binary}')
+                print(f'meanIoU_binary std: {meanIoU_std_binary}')
 
-            if meanIoU_binary > best_iou:
-                best_iou = meanIoU_binary
-                checkpoint(nets, history, cfg, 'best')
-            net_objectness.train(not cfg.TRAIN.fix_bn)
-            net_decoder.train(not cfg.TRAIN.fix_bn)
-            net_decoder.use_softmax = False
+                if meanIoU_binary > best_iou:
+                    best_iou = meanIoU_binary
+                    checkpoint(nets, history, cfg, 'best')
+                net_objectness.train(not cfg.TRAIN.fix_bn)
+                net_decoder.train(not cfg.TRAIN.fix_bn)
+                net_decoder.use_softmax = False
 
 
     print('Training Done!')

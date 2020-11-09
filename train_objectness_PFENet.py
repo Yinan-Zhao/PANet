@@ -193,7 +193,7 @@ def main(cfg, gpus):
     best_iou = 0
     # main loop
     tic = time.time()
-    i_iter = 0
+    i_iter = -1
     print('###### Training ######')    
     for epoch in range(0, 200):
         for _, (input, target) in enumerate(train_loader):

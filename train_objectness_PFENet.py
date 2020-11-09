@@ -148,7 +148,7 @@ def main(cfg, gpus):
 
     train_transform = [
         transform.RandScale([0.9, 1.1]),
-        transform.RandRotate([-10, 10], padding=mean, ignore_label=args.padding_label),
+        transform.RandRotate([-10, 10], padding=mean, ignore_label=255),
         transform.RandomGaussianBlur(),
         transform.RandomHorizontalFlip(),
         transform.Crop([cfg.DATASET.input_size[0], cfg.DATASET.input_size[1]], crop_type='rand', padding=mean, ignore_label=255),

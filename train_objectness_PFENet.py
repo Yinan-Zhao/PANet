@@ -163,7 +163,7 @@ def main(cfg, gpus):
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=cfg.TRAIN.n_batch, shuffle=(train_sampler is None), num_workers=cfg.TRAIN.workers, pin_memory=True, sampler=train_sampler, drop_last=True)
 
     val_transform = transform.Compose([
-        transform.Resize(size=args.val_size),
+        transform.Resize(size=cfg.DATASET.input_size[0]),
         transform.ToTensor(),
         transform.Normalize(mean=mean, std=std)])    
      

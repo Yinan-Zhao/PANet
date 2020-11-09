@@ -169,7 +169,7 @@ def main(cfg, gpus):
      
     val_data = dataset.SemData(split=cfg.TASK.fold_idx, shot=cfg.TASK.n_shots, data_root=cfg.DATASET.data_dir, data_list=cfg.DATASET.val_list, transform=val_transform, mode='val', use_coco=False, use_split_coco=False)
     val_sampler = None
-    val_loader = torch.utils.data.DataLoader(val_data, batch_size=cfg.VAL.n_batch, shuffle=False, num_workers=args.workers, pin_memory=True, sampler=val_sampler)
+    val_loader = torch.utils.data.DataLoader(val_data, batch_size=cfg.VAL.n_batch, shuffle=False, num_workers=cfg.TRAIN.workers, pin_memory=True, sampler=val_sampler)
 
 
     #segmentation_module = nn.DataParallel(segmentation_module, device_ids=gpus)

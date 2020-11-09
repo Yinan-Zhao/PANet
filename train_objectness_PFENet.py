@@ -264,6 +264,8 @@ def main(cfg, gpus):
 
                         #for sample_batched in tqdm.tqdm(testloader):
                         for (input, target, _) in val_loader:
+                            input = input.cuda(non_blocking=True)
+                            target = target.cuda(non_blocking=True)
                             feat = net_objectness(input, return_feature_maps=True)
                             query_pred = net_decoder(feat, segSize=cfg.DATASET.input_size)
                             metric.record(np.array(query_pred.argmax(dim=1)[0].cpu()),

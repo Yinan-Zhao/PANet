@@ -124,8 +124,8 @@ def main(cfg, gpus):
         cocoapi = COCO(annFile)
     else:
         raise ValueError('Wrong config for dataset!')
-    #labels = CLASS_LABELS[data_name]['all'] - CLASS_LABELS[data_name][cfg.TASK.fold_idx]
-    labels = CLASS_LABELS[data_name][cfg.TASK.fold_idx]
+    labels = CLASS_LABELS[data_name]['all'] - CLASS_LABELS[data_name][cfg.TASK.fold_idx]
+    #labels = CLASS_LABELS[data_name][cfg.TASK.fold_idx]
     transforms = [Resize_test(size=cfg.DATASET.input_size)]
     transforms = Compose(transforms)
 

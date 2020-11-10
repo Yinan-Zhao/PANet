@@ -45,8 +45,8 @@ def data_preprocess(sample_batched, cfg, is_val=False):
     else:
         tmp = sample_batched['query_labels'][0]
         tmp = torch.unsqueeze(tmp, 1).float()
-        tmp = nn.functional.interpolate(tmp, size=(cfg.DATASET.input_size[0]//cfg.DATASET.segm_downsampling_rate+2,
-            cfg.DATASET.input_size[1]//cfg.DATASET.segm_downsampling_rate+2), mode='nearest')
+        tmp = nn.functional.interpolate(tmp, size=(cfg.DATASET.input_size[0]//cfg.DATASET.segm_downsampling_rate+1,
+            cfg.DATASET.input_size[1]//cfg.DATASET.segm_downsampling_rate+1), mode='nearest')
         feed_dict['seg_label'] = tmp[:,0,:,:].long().cuda() 
 
     n_ways = cfg.TASK.n_ways

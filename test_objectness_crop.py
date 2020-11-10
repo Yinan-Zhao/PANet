@@ -40,11 +40,14 @@ def visualize_result(data, pred, dir_result):
     pred_color = colorEncodeGray(pred)
 
     # aggregate images and save
-    im_vis = np.concatenate((img, seg_color, pred_color),
-                            axis=1).astype(np.uint8)
+    #im_vis = np.concatenate((img, seg_color, pred_color),
+                            #axis=1).astype(np.uint8)
 
     img_name = info
-    Image.fromarray(im_vis).save(os.path.join(dir_result, img_name+'.png'))
+    #Image.fromarray(im_vis).save(os.path.join(dir_result, img_name+'.png'))
+    Image.fromarray(img.astype(np.uint8)).save(os.path.join(dir_result, img_name+'.jpg'))
+    Image.fromarray(pred_color.astype(np.uint8)).save(os.path.join(dir_result, img_name+'_pred.png'))
+    Image.fromarray(seg_color.astype(np.uint8)).save(os.path.join(dir_result, img_name+'_gt.png'))
 
 def data_preprocess(sample_batched, cfg):
     feed_dict = {}

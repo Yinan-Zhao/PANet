@@ -39,7 +39,7 @@ def pixel_acc(pred, label):
 
 def data_preprocess(sample_batched, cfg, is_val=False):
     feed_dict = {}
-    feed_dict['img_data'] = sample_batched['query_images'][0].cuda()
+    feed_dict['img_data'] = sample_batched['query_images'][0].float().cuda()
     if is_val:
         feed_dict['seg_label'] = sample_batched['query_labels'][0].long().cuda()
     else:

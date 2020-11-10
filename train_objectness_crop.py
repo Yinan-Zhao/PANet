@@ -192,7 +192,7 @@ def main(cfg, gpus):
     train_transform = Compose(train_transform)
 
     val_transform = Compose([
-        transform.Resize_pad(size=cfg.DATASET.input_size[0])])
+        transforms.Resize_pad(size=cfg.DATASET.input_size[0])])
 
     dataset = make_data(
         base_dir=cfg.DATASET.data_dir,

@@ -134,13 +134,13 @@ def main(cfg, gpus):
     mean = [item * value_scale for item in mean]
     std = [0.229, 0.224, 0.225]
     std = [item * value_scale for item in std]
-    
+
     val_transforms = [
         transforms.ToNumpy(),
-        transforms.RandScale([0.9, 1.1]),
-        transforms.RandRotate([-10, 10], padding=mean, ignore_label=0),
-        transforms.RandomGaussianBlur(),
-        transforms.RandomHorizontalFlip(),
+        #transforms.RandScale([0.9, 1.1]),
+        #transforms.RandRotate([-10, 10], padding=mean, ignore_label=0),
+        #transforms.RandomGaussianBlur(),
+        #transforms.RandomHorizontalFlip(),
         transforms.Crop([cfg.DATASET.input_size[0], cfg.DATASET.input_size[1]], crop_type='rand', padding=mean, ignore_label=0)]
 
     val_transforms = Compose(val_transforms)

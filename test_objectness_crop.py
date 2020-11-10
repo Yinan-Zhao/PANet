@@ -128,6 +128,13 @@ def main(cfg, gpus):
     #transforms = [Resize_test(size=cfg.DATASET.input_size)]
     #val_transforms = [transforms.ToNumpy(),
         #transforms.Resize_pad(size=cfg.DATASET.input_size[0])]
+
+    value_scale = 255
+    mean = [0.485, 0.456, 0.406]
+    mean = [item * value_scale for item in mean]
+    std = [0.229, 0.224, 0.225]
+    std = [item * value_scale for item in std]
+    
     val_transforms = [
         transforms.ToNumpy(),
         transforms.RandScale([0.9, 1.1]),

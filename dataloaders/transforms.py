@@ -91,6 +91,28 @@ class Resize_test(object):
         sample['label'] = label
         return sample
 
+class ToTensorNormalize_noresize(object):
+    """
+    Convert images/masks to torch.Tensor
+    Scale images' pixel values to [0-1] and normalize with predefined statistics
+    """
+    def __call__(self, sample):
+        img, label = sample['image'], sample['label']
+        img = tr_F.to_tensor(img)
+        img = tr_F.normalize(img, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        if isinstance(label, dict):
+            label = {catId: torch.Tensor(np.array(x)).long()
+                     for catId, x in label.items()}
+        else:
+            label = torch.Tensor(np.array(label)).long()
+
+        sample['image'] = img
+        sample['image_noresize'] = img
+        sample['label'] = label
+        sample['label_noresize'] = label
+
+        return sample
+
 class ToTensorNormalize(object):
     """
     Convert images/masks to torch.Tensor
@@ -213,8 +235,8 @@ class ToNumpy(object):
         label = np.asarray(label)
         sample['image'] = image
         sample['label'] = label
-        sample['image_noresize'] = image
-        sample['label_noresize'] = label
+        del sample['image_noresize']
+        del sample['label_noresize']
         return sample
 
 

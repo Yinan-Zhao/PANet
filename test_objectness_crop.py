@@ -126,8 +126,8 @@ def main(cfg, gpus):
     #labels = CLASS_LABELS[data_name]['all'] - CLASS_LABELS[data_name][cfg.TASK.fold_idx]
     labels = CLASS_LABELS[data_name][cfg.TASK.fold_idx]
     #transforms = [Resize_test(size=cfg.DATASET.input_size)]
-    #val_transforms = [transforms.ToNumpy(),
-        #transforms.Resize_pad(size=cfg.DATASET.input_size[0])]
+    val_transforms = [transforms.ToNumpy(),
+        transforms.Resize_pad(size=cfg.DATASET.input_size[0])]
 
     value_scale = 255
     mean = [0.485, 0.456, 0.406]
@@ -135,13 +135,13 @@ def main(cfg, gpus):
     std = [0.229, 0.224, 0.225]
     std = [item * value_scale for item in std]
 
-    val_transforms = [
+    '''val_transforms = [
         transforms.ToNumpy(),
         #transforms.RandScale([0.9, 1.1]),
         #transforms.RandRotate([-10, 10], padding=mean, ignore_label=0),
         #transforms.RandomGaussianBlur(),
         #transforms.RandomHorizontalFlip(),
-        transforms.Crop([cfg.DATASET.input_size[0], cfg.DATASET.input_size[1]], crop_type='rand', padding=mean, ignore_label=0)]
+        transforms.Crop([cfg.DATASET.input_size[0], cfg.DATASET.input_size[1]], crop_type='rand', padding=mean, ignore_label=0)]'''
 
     val_transforms = Compose(val_transforms)
 
@@ -202,7 +202,7 @@ def main(cfg, gpus):
                         img = imread(os.path.join(cfg.DATASET.data_dir, split, img_meta['file_name']))
                     #img = imresize(img, cfg.DATASET.input_size)
                     visualize_result(
-                        (img, as_numpy(feed_dict['seg_label_noresize'][0].cpu()), '%05d'%(count)),
+                        (img, as_numpy(feed_dict['seg_label'][0].cpu()), '%05d'%(count)),
                         as_numpy(np.array(query_pred.argmax(dim=1)[0].cpu())),
                         os.path.join(cfg.DIR, 'result')
                     )

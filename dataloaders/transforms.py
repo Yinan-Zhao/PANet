@@ -149,6 +149,12 @@ class Resize_pad(object):
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
 
+        value_scale = 255
+        mean = [0.485, 0.456, 0.406]
+        mean = [item * value_scale for item in mean]
+        std = [0.229, 0.224, 0.225]
+        std = [item * value_scale for item in std]
+
         def find_new_hw(ori_h, ori_w, test_size):
             if ori_h >= ori_w:
                 ratio = test_size*1.0 / ori_h
@@ -174,9 +180,9 @@ class Resize_pad(object):
         #new_h, new_w = test_size, test_size
         image_crop = cv2.resize(image, dsize=(int(new_w), int(new_h)), interpolation=cv2.INTER_LINEAR)
         back_crop = np.zeros((test_size, test_size, 3)) 
-        # back_crop[:,:,0] = mean[0]
-        # back_crop[:,:,1] = mean[1]
-        # back_crop[:,:,2] = mean[2]
+        back_crop[:,:,0] = mean[0]
+        back_crop[:,:,1] = mean[1]
+        back_crop[:,:,2] = mean[2]
         back_crop[:new_h, :new_w, :] = image_crop
         image = back_crop 
 
@@ -184,7 +190,8 @@ class Resize_pad(object):
         new_h, new_w = find_new_hw(s_mask.shape[0], s_mask.shape[1], test_size)
         #new_h, new_w = test_size, test_size
         s_mask = cv2.resize(s_mask.astype(np.float32), dsize=(int(new_w), int(new_h)),interpolation=cv2.INTER_NEAREST)
-        back_crop_s_mask = np.ones((test_size, test_size)) * 255
+        #back_crop_s_mask = np.ones((test_size, test_size)) * 255
+        back_crop_s_mask = np.ones((test_size, test_size)) * 0
         back_crop_s_mask[:new_h, :new_w] = s_mask
         label = back_crop_s_mask
 

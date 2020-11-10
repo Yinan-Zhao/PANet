@@ -126,9 +126,9 @@ def main(cfg, gpus):
     labels = CLASS_LABELS[data_name]['all'] - CLASS_LABELS[data_name][cfg.TASK.fold_idx]
     #labels = CLASS_LABELS[data_name][cfg.TASK.fold_idx]
     #transforms = [Resize_test(size=cfg.DATASET.input_size)]
-    transforms = [transforms.ToNumpy(),
+    val_transforms = [transforms.ToNumpy(),
         transforms.Resize_pad(size=cfg.DATASET.input_size[0])]
-    transforms = Compose(transforms)
+    val_transforms = Compose(val_transforms)
 
 
     print('###### Testing begins ######')
@@ -142,7 +142,7 @@ def main(cfg, gpus):
             dataset = make_data(
                 base_dir=cfg.DATASET.data_dir,
                 split=cfg.DATASET.data_split,
-                transforms=transforms,
+                transforms=val_transforms,
                 to_tensor=transforms.ToTensorNormalize_noresize(),
                 labels=labels,
                 max_iters=cfg.VAL.n_iters * cfg.VAL.n_batch,

@@ -126,8 +126,16 @@ def main(cfg, gpus):
     #labels = CLASS_LABELS[data_name]['all'] - CLASS_LABELS[data_name][cfg.TASK.fold_idx]
     labels = CLASS_LABELS[data_name][cfg.TASK.fold_idx]
     #transforms = [Resize_test(size=cfg.DATASET.input_size)]
-    val_transforms = [transforms.ToNumpy(),
-        transforms.Resize_pad(size=cfg.DATASET.input_size[0])]
+    #val_transforms = [transforms.ToNumpy(),
+        #transforms.Resize_pad(size=cfg.DATASET.input_size[0])]
+    val_transforms = [
+        transforms.ToNumpy(),
+        transforms.RandScale([0.9, 1.1]),
+        transforms.RandRotate([-10, 10], padding=mean, ignore_label=0),
+        transforms.RandomGaussianBlur(),
+        transforms.RandomHorizontalFlip(),
+        transforms.Crop([cfg.DATASET.input_size[0], cfg.DATASET.input_size[1]], crop_type='rand', padding=mean, ignore_label=0)]
+
     val_transforms = Compose(val_transforms)
 
 

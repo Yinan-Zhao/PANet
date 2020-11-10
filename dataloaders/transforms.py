@@ -135,6 +135,8 @@ class ToTensorNormalize_noresize(object):
 
         sample['image'] = img
         sample['label'] = label
+        sample['image_noresize'] = img
+        sample['label_noresize'] = label
 
         return sample
 

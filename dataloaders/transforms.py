@@ -9,6 +9,11 @@ import numpy as np
 import torch
 import torchvision.transforms.functional as tr_F
 
+import math
+import numbers
+import collections
+import cv2
+
 
 class RandomMirror(object):
     """

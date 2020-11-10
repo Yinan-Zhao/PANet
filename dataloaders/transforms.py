@@ -189,8 +189,8 @@ class RandScale(object):
 
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
-        print(type(sample['image']))
-        print(sample['image'])
+        image = np.asarray(image)
+        label = np.asarray(label)
         temp_scale = self.scale[0] + (self.scale[1] - self.scale[0]) * random.random()
         temp_aspect_ratio = 1.0
         if self.aspect_ratio is not None:
@@ -201,6 +201,17 @@ class RandScale(object):
         image = cv2.resize(image, None, fx=scale_factor_x, fy=scale_factor_y, interpolation=cv2.INTER_LINEAR)
         label = cv2.resize(label, None, fx=scale_factor_x, fy=scale_factor_y, interpolation=cv2.INTER_NEAREST)
         sample['image'], sample['label'] = image, label
+        return sample
+
+class ToNumpy(object):
+    # Randomly resize image & label with scale factor in [scale_min, scale_max]
+    def __init__(self):
+        pass
+
+    def __call__(self, sample):
+        image, label = sample['image'], sample['label']
+        image = np.asarray(image)
+        label = np.asarray(label)
         return sample
 
 

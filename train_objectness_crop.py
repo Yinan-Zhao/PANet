@@ -183,6 +183,7 @@ def main(cfg, gpus):
     std = [item * value_scale for item in std]
 
     train_transform = [
+        transforms.ToNumpy(),
         transforms.RandScale([0.9, 1.1]),
         transforms.RandRotate([-10, 10], padding=mean, ignore_label=0),
         transforms.RandomGaussianBlur(),
@@ -192,6 +193,7 @@ def main(cfg, gpus):
     train_transform = Compose(train_transform)
 
     val_transform = Compose([
+        transforms.ToNumpy(),
         transforms.Resize_pad(size=cfg.DATASET.input_size[0])])
 
     dataset = make_data(

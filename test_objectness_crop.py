@@ -48,9 +48,9 @@ def visualize_result(data, pred, dir_result):
 
 def data_preprocess(sample_batched, cfg):
     feed_dict = {}
-    feed_dict['img_data'] = sample_batched['query_images'][0].cuda()
+    feed_dict['img_data'] = sample_batched['query_images'][0].float().cuda()
     feed_dict['img_data_noresize'] = sample_batched['query_images_noresize'][0].cuda()
-    feed_dict['seg_label'] = sample_batched['query_labels'][0].cuda()
+    feed_dict['seg_label'] = sample_batched['query_labels'][0].long().cuda()
     feed_dict['seg_label_noresize'] = sample_batched['query_labels_noresize'][0].cuda()
 
     n_ways = cfg.TASK.n_ways

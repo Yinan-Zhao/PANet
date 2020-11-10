@@ -189,6 +189,8 @@ class RandScale(object):
 
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
+        print(type(sample['image']))
+        print(sample['image'])
         temp_scale = self.scale[0] + (self.scale[1] - self.scale[0]) * random.random()
         temp_aspect_ratio = 1.0
         if self.aspect_ratio is not None:

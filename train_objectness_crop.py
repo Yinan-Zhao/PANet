@@ -41,7 +41,7 @@ def data_preprocess(sample_batched, cfg, is_val=False):
     feed_dict = {}
     feed_dict['img_data'] = sample_batched['query_images'][0].cuda()
     if is_val:
-        feed_dict['seg_label'] = sample_batched['query_labels'][0].cuda()
+        feed_dict['seg_label'] = sample_batched['query_labels'][0].long().cuda()
     else:
         tmp = sample_batched['query_labels'][0]
         tmp = torch.unsqueeze(tmp, 1).float()

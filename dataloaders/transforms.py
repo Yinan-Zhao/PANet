@@ -198,7 +198,7 @@ class Resize_pad(object):
                 #back_crop_s_mask = np.ones((test_size, test_size)) * 255
                 back_crop_s_mask = np.ones((test_size, test_size)) * 0
                 back_crop_s_mask[:new_h, :new_w] = s_mask
-                label_return{catId} = back_crop_s_mask
+                label_return[catId] = back_crop_s_mask
             sample['image'], sample['label'] = image, label_return
         else:
             s_mask = label

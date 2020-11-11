@@ -178,6 +178,7 @@ def main(cfg, gpus):
             count = 0
 
             for sample_batched in tqdm.tqdm(testloader):
+                pdb.set_trace()
                 feed_dict = data_preprocess(sample_batched, cfg)
                 if data_name == 'COCO':
                     label_ids = [coco_cls_ids.index(x) + 1 for x in sample_batched['class_ids']]

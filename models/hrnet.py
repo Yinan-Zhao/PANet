@@ -393,7 +393,6 @@ class HRNetV2(nn.Module):
         return nn.Sequential(*modules), num_inchannels
 
     def forward(self, x, return_feature_maps=False):
-        pdb.set_trace()
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)

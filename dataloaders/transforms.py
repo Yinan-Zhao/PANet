@@ -238,6 +238,9 @@ class ToNumpy(object):
 
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
+        print(type(sample['image']))
+        print(type(sample['label']))
+        print(sample['image'])
         image = np.asarray(image, dtype=np.float32)
         label = np.asarray(label, dtype=np.float32)
         sample['image'] = image

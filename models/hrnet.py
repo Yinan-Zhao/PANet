@@ -15,6 +15,8 @@ from torch.nn import BatchNorm2d
 BN_MOMENTUM = 0.1
 logger = logging.getLogger(__name__)
 
+import pdb
+
 
 __all__ = ['hrnetv2']
 

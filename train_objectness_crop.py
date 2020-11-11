@@ -27,7 +27,8 @@ from utils_seg import AverageMeter, parse_devices, setup_logger
 from models import ModelBuilder
 
 import sys
-sys.path.append('/home/yz9244/PANet/cocoapi/PythonAPI/')
+#sys.path.append('/home/yz9244/PANet/cocoapi/PythonAPI/')
+sys.path.append('./cocoapi/PythonAPI/')
 
 def pixel_acc(pred, label):
     _, preds = torch.max(pred, dim=1)

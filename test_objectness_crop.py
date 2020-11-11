@@ -29,6 +29,8 @@ import sys
 sys.path.append('/home/yz9244/PANet/cocoapi/PythonAPI/')
 from pycocotools.coco import COCO
 
+import pdb
+
 
 def visualize_result(data, pred, dir_result):
     (img, seg, info) = data

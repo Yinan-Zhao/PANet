@@ -356,7 +356,7 @@ class Crop(object):
             pos_num = np.sum(label == 1)
            
         crop_cnt = 0
-        while(pos_num < 0.85*raw_pos_num and crop_cnt<=30):
+        while(pos_num < 0.85*raw_pos_num and crop_cnt<=10):
             image = raw_image
             if isinstance(label, dict):
                 label = deepcopy(raw_label)

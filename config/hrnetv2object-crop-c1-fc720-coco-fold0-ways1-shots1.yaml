@@ -31,7 +31,7 @@ TRAIN:
   weight_decay: 1e-4
   deep_sup_scale: 0.4
   fix_bn: False
-  workers: 2
+  workers: 4
   disp_iter: 200
   seed: 304
   save_freq: 50000

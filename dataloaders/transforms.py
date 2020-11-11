@@ -240,7 +240,8 @@ class ToNumpy(object):
         image, label = sample['image'], sample['label']
         print(type(sample['image']))
         print(type(sample['label']))
-        print(sample['image'])
+        print(sample['label'].keys())
+        print(sample['label'])
         image = np.asarray(image, dtype=np.float32)
         label = np.asarray(label, dtype=np.float32)
         sample['image'] = image

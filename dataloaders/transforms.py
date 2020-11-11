@@ -238,8 +238,8 @@ class ToNumpy(object):
 
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
-        image = np.asarray(image, dtype=np.uint8)
-        label = np.asarray(label, dtype=np.uint8)
+        image = np.asarray(image, dtype=np.float32)/255.
+        label = np.asarray(label, dtype=np.float32)
         sample['image'] = image
         sample['label'] = label
         del sample['image_noresize']

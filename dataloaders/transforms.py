@@ -14,6 +14,8 @@ import numbers
 import collections
 import cv2
 
+from copy import deepcopy
+
 
 class RandomMirror(object):
     """
@@ -186,16 +188,28 @@ class Resize_pad(object):
         back_crop[:new_h, :new_w, :] = image_crop
         image = back_crop 
 
-        s_mask = label
-        new_h, new_w = find_new_hw(s_mask.shape[0], s_mask.shape[1], test_size)
-        #new_h, new_w = test_size, test_size
-        s_mask = cv2.resize(s_mask.astype(np.float32), dsize=(int(new_w), int(new_h)),interpolation=cv2.INTER_NEAREST)
-        #back_crop_s_mask = np.ones((test_size, test_size)) * 255
-        back_crop_s_mask = np.ones((test_size, test_size)) * 0
-        back_crop_s_mask[:new_h, :new_w] = s_mask
-        label = back_crop_s_mask
-
-        sample['image'], sample['label'] = image, label
+        if isinstance(label, dict):
+            label_return = {}
+            for catId, x in label.items():
+                s_mask = x
+                new_h, new_w = find_new_hw(s_mask.shape[0], s_mask.shape[1], test_size)
+                #new_h, new_w = test_size, test_size
+                s_mask = cv2.resize(s_mask.astype(np.float32), dsize=(int(new_w), int(new_h)),interpolation=cv2.INTER_NEAREST)
+                #back_crop_s_mask = np.ones((test_size, test_size)) * 255
+                back_crop_s_mask = np.ones((test_size, test_size)) * 0
+                back_crop_s_mask[:new_h, :new_w] = s_mask
+                label_return{catId} = back_crop_s_mask
+            sample['image'], sample['label'] = image, label_return
+        else:
+            s_mask = label
+            new_h, new_w = find_new_hw(s_mask.shape[0], s_mask.shape[1], test_size)
+            #new_h, new_w = test_size, test_size
+            s_mask = cv2.resize(s_mask.astype(np.float32), dsize=(int(new_w), int(new_h)),interpolation=cv2.INTER_NEAREST)
+            #back_crop_s_mask = np.ones((test_size, test_size)) * 255
+            back_crop_s_mask = np.ones((test_size, test_size)) * 0
+            back_crop_s_mask[:new_h, :new_w] = s_mask
+            label = back_crop_s_mask
+            sample['image'], sample['label'] = image, label
         return sample
 
 class RandScale(object):
@@ -227,7 +241,11 @@ class RandScale(object):
         scale_factor_x = temp_scale * temp_aspect_ratio
         scale_factor_y = temp_scale / temp_aspect_ratio
         image = cv2.resize(image, None, fx=scale_factor_x, fy=scale_factor_y, interpolation=cv2.INTER_LINEAR)
-        label = cv2.resize(label, None, fx=scale_factor_x, fy=scale_factor_y, interpolation=cv2.INTER_NEAREST)
+        if isinstance(label, dict):
+            label = {catId: cv2.resize(x, None, fx=scale_factor_x, fy=scale_factor_y, interpolation=cv2.INTER_NEAREST)
+                     for catId, x in label.items()}
+        else:
+            label = cv2.resize(label, None, fx=scale_factor_x, fy=scale_factor_y, interpolation=cv2.INTER_NEAREST)
         sample['image'], sample['label'] = image, label
         return sample
 
@@ -238,12 +256,12 @@ class ToNumpy(object):
 
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
-        print(type(sample['image']))
-        print(type(sample['label']))
-        print(sample['label'].keys())
-        print(sample['label'])
         image = np.asarray(image, dtype=np.float32)
-        label = np.asarray(label, dtype=np.float32)
+        if isinstance(label, dict):
+            label = {catId: np.asarray(x, dtype=np.float32)
+                     for catId, x in label.items()}
+        else:
+            label = np.asarray(label, dtype=np.float32)
         sample['image'] = image
         sample['label'] = label
         del sample['image_noresize']
@@ -291,7 +309,10 @@ class Crop(object):
 
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
-        h, w = label.shape
+        if isinstance(label, dict):
+            h, w = label[label.keys()[0]].shape
+        else:
+            h, w = label.shape
 
         
         pad_h = max(self.crop_h - h, 0)
@@ -302,9 +323,18 @@ class Crop(object):
             if self.padding is None:
                 raise (RuntimeError("segtransform.Crop() need padding while padding argument is None\n"))
             image = cv2.copyMakeBorder(image, pad_h_half, pad_h - pad_h_half, pad_w_half, pad_w - pad_w_half, cv2.BORDER_CONSTANT, value=self.padding)
-            label = cv2.copyMakeBorder(label, pad_h_half, pad_h - pad_h_half, pad_w_half, pad_w - pad_w_half, cv2.BORDER_CONSTANT, value=self.ignore_label)
-        h, w = label.shape
-        raw_label = label
+            if isinstance(label, dict):
+                label = {catId: cv2.copyMakeBorder(x, pad_h_half, pad_h - pad_h_half, pad_w_half, pad_w - pad_w_half, cv2.BORDER_CONSTANT, value=self.ignore_label)
+                     for catId, x in label.items()}
+            else:
+                label = cv2.copyMakeBorder(label, pad_h_half, pad_h - pad_h_half, pad_w_half, pad_w - pad_w_half, cv2.BORDER_CONSTANT, value=self.ignore_label)
+        if isinstance(label, dict):
+            h, w = label[label.keys()[0]].shape
+            raw_label = deepcopy(label)
+        else:
+            h, w = label.shape
+            raw_label = label
+
         raw_image = image
 
         if self.crop_type == 'rand':
@@ -314,13 +344,24 @@ class Crop(object):
             h_off = int((h - self.crop_h) / 2)
             w_off = int((w - self.crop_w) / 2)
         image = image[h_off:h_off+self.crop_h, w_off:w_off+self.crop_w]
-        label = label[h_off:h_off+self.crop_h, w_off:w_off+self.crop_w]
-        raw_pos_num = np.sum(raw_label == 1)
-        pos_num = np.sum(label == 1)
+
+        if isinstance(label, dict):
+            label = {catId: x[h_off:h_off+self.crop_h, w_off:w_off+self.crop_w]
+                     for catId, x in label.items()}
+            raw_pos_num = np.sum([np.sum(x == 1) for catId, x in raw_label.items()])
+            pos_num = np.sum([np.sum(x == 1) for catId, x in label.items()])
+        else:
+            label = label[h_off:h_off+self.crop_h, w_off:w_off+self.crop_w]
+            raw_pos_num = np.sum(raw_label == 1)
+            pos_num = np.sum(label == 1)
+           
         crop_cnt = 0
         while(pos_num < 0.85*raw_pos_num and crop_cnt<=30):
             image = raw_image
-            label = raw_label
+            if isinstance(label, dict):
+                label = deepcopy(raw_label)
+            else:
+                label = raw_label
             if self.crop_type == 'rand':
                 h_off = random.randint(0, h - self.crop_h)
                 w_off = random.randint(0, w - self.crop_w)
@@ -328,17 +369,31 @@ class Crop(object):
                 h_off = int((h - self.crop_h) / 2)
                 w_off = int((w - self.crop_w) / 2)
             image = image[h_off:h_off+self.crop_h, w_off:w_off+self.crop_w]
-            label = label[h_off:h_off+self.crop_h, w_off:w_off+self.crop_w]   
-            raw_pos_num = np.sum(raw_label == 1)
-            pos_num = np.sum(label == 1)  
+            if isinstance(label, dict):
+                label = {catId: x[h_off:h_off+self.crop_h, w_off:w_off+self.crop_w]
+                         for catId, x in label.items()}
+                raw_pos_num = np.sum([np.sum(x == 1) for catId, x in raw_label.items()])
+                pos_num = np.sum([np.sum(x == 1) for catId, x in label.items()])
+            else:
+                label = label[h_off:h_off+self.crop_h, w_off:w_off+self.crop_w]
+                raw_pos_num = np.sum(raw_label == 1)
+                pos_num = np.sum(label == 1)  
             crop_cnt += 1
         if crop_cnt >= 50:
             image = cv2.resize(raw_image, (self.size[0], self.size[0]), interpolation=cv2.INTER_LINEAR)
-            label = cv2.resize(raw_label, (self.size[0], self.size[0]), interpolation=cv2.INTER_NEAREST)            
+            if isinstance(label, dict):
+                label = {catId: cv2.resize(x, (self.size[0], self.size[0]), interpolation=cv2.INTER_NEAREST)
+                     for catId, x in raw_label.items()}
+            else:
+                label = cv2.resize(raw_label, (self.size[0], self.size[0]), interpolation=cv2.INTER_NEAREST)            
                                
         if image.shape != (self.size[0], self.size[0], 3):
             image = cv2.resize(image, (self.size[0], self.size[0]), interpolation=cv2.INTER_LINEAR)
-            label = cv2.resize(label, (self.size[0], self.size[0]), interpolation=cv2.INTER_NEAREST)
+            if isinstance(label, dict):
+                label = {catId: cv2.resize(x, (self.size[0], self.size[0]), interpolation=cv2.INTER_NEAREST)
+                     for catId, x in label.items()}
+            else:
+                label = cv2.resize(label, (self.size[0], self.size[0]), interpolation=cv2.INTER_NEAREST)
 
         sample['image'], sample['label'] = image, label
         return sample
@@ -366,10 +421,17 @@ class RandRotate(object):
         image, label = sample['image'], sample['label']
         if random.random() < self.p:
             angle = self.rotate[0] + (self.rotate[1] - self.rotate[0]) * random.random()
-            h, w = label.shape
+            if isinstance(label, dict):
+                h, w = label[label.keys()[0]].shape
+            else:
+                h, w = label.shape
             matrix = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1)
             image = cv2.warpAffine(image, matrix, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=self.padding)
-            label = cv2.warpAffine(label, matrix, (w, h), flags=cv2.INTER_NEAREST, borderMode=cv2.BORDER_CONSTANT, borderValue=self.ignore_label)
+            if isinstance(label, dict):
+                label = {catId: cv2.warpAffine(x, matrix, (w, h), flags=cv2.INTER_NEAREST, borderMode=cv2.BORDER_CONSTANT, borderValue=self.ignore_label)
+                     for catId, x in label.items()}
+            else:
+                label = cv2.warpAffine(label, matrix, (w, h), flags=cv2.INTER_NEAREST, borderMode=cv2.BORDER_CONSTANT, borderValue=self.ignore_label)
         sample['image'], sample['label'] = image, label
         return sample
 
@@ -382,7 +444,11 @@ class RandomHorizontalFlip(object):
         image, label = sample['image'], sample['label']
         if random.random() < self.p:
             image = cv2.flip(image, 1)
-            label = cv2.flip(label, 1)
+            if isinstance(label, dict):
+                label = {catId: cv2.flip(x, 1)
+                     for catId, x in label.items()}
+            else:
+                label = cv2.flip(label, 1)
         sample['image'], sample['label'] = image, label
         return sample
 
@@ -395,7 +461,11 @@ class RandomVerticalFlip(object):
         image, label = sample['image'], sample['label']
         if random.random() < self.p:
             image = cv2.flip(image, 0)
-            label = cv2.flip(label, 0)
+            if isinstance(label, dict):
+                label = {catId: cv2.flip(x, 0)
+                     for catId, x in label.items()}
+            else:
+                label = cv2.flip(label, 0)
         sample['image'], sample['label'] = image, label
         return sample
 

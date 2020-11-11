@@ -98,7 +98,7 @@ class ToTensorNormalize_noresize(object):
     """
     def __call__(self, sample):
         img, label = sample['image'], sample['label']
-        img = tr_F.to_tensor(img)
+        img = tr_F.to_tensor(img/255.)
         img = tr_F.normalize(img, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         if isinstance(label, dict):
             label = {catId: torch.Tensor(np.array(x)).long()
@@ -238,7 +238,7 @@ class ToNumpy(object):
 
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
-        image = np.asarray(image, dtype=np.float32)/255.
+        image = np.asarray(image, dtype=np.float32)
         label = np.asarray(label, dtype=np.float32)
         sample['image'] = image
         sample['label'] = label

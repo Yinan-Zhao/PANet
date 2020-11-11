@@ -10,7 +10,7 @@ TASK:
   n_ways: 1
   n_shots: 1
   n_queries: 1
-  fold_idx: 0
+  fold_idx: 1
 
 MODEL:
   arch_objectness: "hrnetv2"
@@ -31,7 +31,7 @@ TRAIN:
   weight_decay: 1e-4
   deep_sup_scale: 0.4
   fix_bn: False
-  workers: 2
+  workers: 4
   disp_iter: 200
   seed: 304
   save_freq: 50000
@@ -47,4 +47,4 @@ TEST:
   checkpoint: "epoch_25.pth"
   result: "./"
 
-DIR: "ckpt/hrnetv2object-crop-c1-fc720-coco-fold0-ways1-shots1"
+DIR: "ckpt/hrnetv2object-crop-c1-fc720-coco-fold1-ways1-shots1"

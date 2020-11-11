@@ -310,7 +310,7 @@ class Crop(object):
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
         if isinstance(label, dict):
-            h, w = label[label.keys()[0]].shape
+            h, w = label[list(label.keys())[0]].shape
         else:
             h, w = label.shape
 
@@ -329,7 +329,7 @@ class Crop(object):
             else:
                 label = cv2.copyMakeBorder(label, pad_h_half, pad_h - pad_h_half, pad_w_half, pad_w - pad_w_half, cv2.BORDER_CONSTANT, value=self.ignore_label)
         if isinstance(label, dict):
-            h, w = label[label.keys()[0]].shape
+            h, w = label[list(label.keys())[0]].shape
             raw_label = deepcopy(label)
         else:
             h, w = label.shape
@@ -422,7 +422,7 @@ class RandRotate(object):
         if random.random() < self.p:
             angle = self.rotate[0] + (self.rotate[1] - self.rotate[0]) * random.random()
             if isinstance(label, dict):
-                h, w = label[label.keys()[0]].shape
+                h, w = label[list(label.keys())[0]].shape
             else:
                 h, w = label.shape
             matrix = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1)
